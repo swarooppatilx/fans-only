@@ -150,6 +150,1141 @@ const deployedContracts = {
       inheritedFunctions: {},
       deployedOnBlock: 4,
     },
+    CreatorProfile: {
+      address: "0xb19b36b1456e65e3a6d514d3f715f204bd59f431",
+      abi: [
+        {
+          type: "constructor",
+          inputs: [
+            {
+              name: "_platformWallet",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "MAX_TIERS",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "PLATFORM_FEE_PERCENT",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "SUBSCRIPTION_DURATION",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "allCreators",
+          inputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "createTier",
+          inputs: [
+            {
+              name: "_name",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_description",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_price",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "creatorTiers",
+          inputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [
+            {
+              name: "name",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "description",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "price",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "isActive",
+              type: "bool",
+              internalType: "bool",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "creators",
+          inputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "username",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "displayName",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "bio",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "profileImageCID",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "bannerImageCID",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "isVerified",
+              type: "bool",
+              internalType: "bool",
+            },
+            {
+              name: "isActive",
+              type: "bool",
+              internalType: "bool",
+            },
+            {
+              name: "createdAt",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "totalSubscribers",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "totalEarnings",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "deactivateTier",
+          inputs: [
+            {
+              name: "_tierId",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "getCreator",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "tuple",
+              internalType: "struct CreatorProfile.Creator",
+              components: [
+                {
+                  name: "username",
+                  type: "string",
+                  internalType: "string",
+                },
+                {
+                  name: "displayName",
+                  type: "string",
+                  internalType: "string",
+                },
+                {
+                  name: "bio",
+                  type: "string",
+                  internalType: "string",
+                },
+                {
+                  name: "profileImageCID",
+                  type: "string",
+                  internalType: "string",
+                },
+                {
+                  name: "bannerImageCID",
+                  type: "string",
+                  internalType: "string",
+                },
+                {
+                  name: "isVerified",
+                  type: "bool",
+                  internalType: "bool",
+                },
+                {
+                  name: "isActive",
+                  type: "bool",
+                  internalType: "bool",
+                },
+                {
+                  name: "createdAt",
+                  type: "uint256",
+                  internalType: "uint256",
+                },
+                {
+                  name: "totalSubscribers",
+                  type: "uint256",
+                  internalType: "uint256",
+                },
+                {
+                  name: "totalEarnings",
+                  type: "uint256",
+                  internalType: "uint256",
+                },
+              ],
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getCreatorByUsername",
+          inputs: [
+            {
+              name: "_username",
+              type: "string",
+              internalType: "string",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getCreatorTiers",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "tuple[]",
+              internalType: "struct CreatorProfile.SubscriptionTier[]",
+              components: [
+                {
+                  name: "name",
+                  type: "string",
+                  internalType: "string",
+                },
+                {
+                  name: "description",
+                  type: "string",
+                  internalType: "string",
+                },
+                {
+                  name: "price",
+                  type: "uint256",
+                  internalType: "uint256",
+                },
+                {
+                  name: "isActive",
+                  type: "bool",
+                  internalType: "bool",
+                },
+              ],
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getCreators",
+          inputs: [
+            {
+              name: "_offset",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "_limit",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "address[]",
+              internalType: "address[]",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getSubscription",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+            {
+              name: "_subscriber",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "tuple",
+              internalType: "struct CreatorProfile.Subscription",
+              components: [
+                {
+                  name: "tierId",
+                  type: "uint256",
+                  internalType: "uint256",
+                },
+                {
+                  name: "startTime",
+                  type: "uint256",
+                  internalType: "uint256",
+                },
+                {
+                  name: "endTime",
+                  type: "uint256",
+                  internalType: "uint256",
+                },
+                {
+                  name: "isActive",
+                  type: "bool",
+                  internalType: "bool",
+                },
+              ],
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getTotalCreators",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "isCreator",
+          inputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "bool",
+              internalType: "bool",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "isSubscribed",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+            {
+              name: "_subscriber",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "bool",
+              internalType: "bool",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "owner",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "pause",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "paused",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "bool",
+              internalType: "bool",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "platformWallet",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "registerCreator",
+          inputs: [
+            {
+              name: "_username",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_displayName",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_bio",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_profileImageCID",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_bannerImageCID",
+              type: "string",
+              internalType: "string",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "renewSubscription",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [],
+          stateMutability: "payable",
+        },
+        {
+          type: "function",
+          name: "renounceOwnership",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "subscribe",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+            {
+              name: "_tierId",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [],
+          stateMutability: "payable",
+        },
+        {
+          type: "function",
+          name: "subscriptions",
+          inputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "tierId",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "startTime",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "endTime",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "isActive",
+              type: "bool",
+              internalType: "bool",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "transferOwnership",
+          inputs: [
+            {
+              name: "newOwner",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "unpause",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "updatePlatformWallet",
+          inputs: [
+            {
+              name: "_newWallet",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "updateProfile",
+          inputs: [
+            {
+              name: "_displayName",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_bio",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_profileImageCID",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_bannerImageCID",
+              type: "string",
+              internalType: "string",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "updateTier",
+          inputs: [
+            {
+              name: "_tierId",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "_name",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_description",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_price",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "usernameToAddress",
+          inputs: [
+            {
+              name: "",
+              type: "string",
+              internalType: "string",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "verifyCreator",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "event",
+          name: "CreatorProfileUpdated",
+          inputs: [
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "timestamp",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "CreatorRegistered",
+          inputs: [
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "username",
+              type: "string",
+              indexed: false,
+              internalType: "string",
+            },
+            {
+              name: "timestamp",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "CreatorVerified",
+          inputs: [
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "OwnershipTransferred",
+          inputs: [
+            {
+              name: "previousOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "newOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "Paused",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              indexed: false,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "PlatformWalletUpdated",
+          inputs: [
+            {
+              name: "oldWallet",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "newWallet",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "Subscribed",
+          inputs: [
+            {
+              name: "subscriber",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "tierId",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "price",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "endTime",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "SubscriptionCancelled",
+          inputs: [
+            {
+              name: "subscriber",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "SubscriptionRenewed",
+          inputs: [
+            {
+              name: "subscriber",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "tierId",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "newEndTime",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "TierCreated",
+          inputs: [
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "tierId",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "name",
+              type: "string",
+              indexed: false,
+              internalType: "string",
+            },
+            {
+              name: "price",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "TierDeactivated",
+          inputs: [
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "tierId",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "TierUpdated",
+          inputs: [
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "tierId",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "name",
+              type: "string",
+              indexed: false,
+              internalType: "string",
+            },
+            {
+              name: "price",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "Unpaused",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              indexed: false,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "error",
+          name: "AlreadyACreator",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "AlreadySubscribed",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "EnforcedPause",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "ExpectedPause",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "InsufficientPayment",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "InvalidAddress",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "InvalidTier",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "InvalidUsername",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "MaxTiersReached",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "NotACreator",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "NotSubscribed",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "OwnableInvalidOwner",
+          inputs: [
+            {
+              name: "owner",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "OwnableUnauthorizedAccount",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "ReentrancyGuardReentrantCall",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "TierNotActive",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "TransferFailed",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "UsernameAlreadyTaken",
+          inputs: [],
+        },
+      ],
+      inheritedFunctions: {},
+      deployedOnBlock: 5,
+    },
   },
 } as const;
 
