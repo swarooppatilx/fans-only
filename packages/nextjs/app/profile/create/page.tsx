@@ -12,6 +12,7 @@ import {
   TrashIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import { FileUpload } from "~~/components/FileUpload";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
 interface TierInput {
@@ -260,29 +261,28 @@ const CreateProfilePage: NextPage = () => {
               </div>
             </div>
 
-            {/* Profile Image CID */}
+            {/* Profile Image Upload */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Profile Image (IPFS CID)</label>
-              <input
-                type="text"
-                value={profileImageCID}
-                onChange={e => setProfileImageCID(e.target.value)}
-                placeholder="Qm... or bafk..."
-                className="fo-input"
+              <FileUpload
+                label="Profile Image"
+                accept="image/*"
+                maxSizeMB={10}
+                onUpload={cid => setProfileImageCID(cid)}
+                placeholder="Upload your profile picture"
               />
-              <p className="text-[--fo-text-muted] text-sm mt-1">Upload your image to IPFS and paste the CID here</p>
+              {profileImageCID && <p className="text-[--fo-text-muted] text-sm mt-2">CID: {profileImageCID}</p>}
             </div>
 
-            {/* Banner Image CID */}
+            {/* Banner Image Upload */}
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Banner Image (IPFS CID)</label>
-              <input
-                type="text"
-                value={bannerImageCID}
-                onChange={e => setBannerImageCID(e.target.value)}
-                placeholder="Qm... or bafk..."
-                className="fo-input"
+              <FileUpload
+                label="Banner Image"
+                accept="image/*"
+                maxSizeMB={20}
+                onUpload={cid => setBannerImageCID(cid)}
+                placeholder="Upload your profile banner"
               />
+              {bannerImageCID && <p className="text-[--fo-text-muted] text-sm mt-2">CID: {bannerImageCID}</p>}
             </div>
 
             <button onClick={() => validateStep1() && setStep(2)} className="fo-btn-primary w-full">

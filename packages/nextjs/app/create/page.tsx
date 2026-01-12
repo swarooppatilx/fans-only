@@ -14,6 +14,7 @@ import {
   VideoCameraIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { FileUpload } from "~~/components/FileUpload";
 import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
 type ContentType = "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "MIXED";
@@ -186,9 +187,32 @@ const CreatePostPage: NextPage = () => {
             <div className="text-right text-sm text-[--fo-text-muted] mt-1">{caption.length}/1000</div>
           </div>
 
-          {/* Content CID */}
+          {/* Media Upload */}
+          {contentType !== "TEXT" && (
+            <div className="mb-6">
+              <FileUpload
+                label="Upload Media"
+                accept={
+                  contentType === "IMAGE"
+                    ? "image/*"
+                    : contentType === "VIDEO"
+                      ? "video/*"
+                      : contentType === "AUDIO"
+                        ? "audio/*"
+                        : "image/*,video/*,audio/*"
+                }
+                maxSizeMB={contentType === "VIDEO" ? 100 : 50}
+                onUpload={cid => setContentCID(cid)}
+                placeholder={`Drag and drop your ${contentType.toLowerCase()} or click to upload`}
+              />
+            </div>
+          )}
+
+          {/* Manual CID Input (fallback) */}
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Content IPFS CID (optional for text posts)</label>
+            <label className="block text-sm font-medium mb-2">
+              {contentType === "TEXT" ? "Content CID (optional)" : "Or paste IPFS CID manually"}
+            </label>
             <input
               type="text"
               value={contentCID}
@@ -196,7 +220,6 @@ const CreatePostPage: NextPage = () => {
               placeholder="Qm... or bafk..."
               className="fo-input"
             />
-            <p className="text-[--fo-text-muted] text-sm mt-1">Upload your media to IPFS and paste the CID here</p>
           </div>
 
           {/* Content Type */}
