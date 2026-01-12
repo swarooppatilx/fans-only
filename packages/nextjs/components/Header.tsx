@@ -8,6 +8,7 @@ import {
   Bars3Icon,
   BellIcon,
   BugAntIcon,
+  ChartBarIcon,
   ChatBubbleLeftIcon,
   CreditCardIcon,
   HomeIcon,
@@ -17,6 +18,7 @@ import {
 } from "@heroicons/react/24/outline";
 import {
   BellIcon as BellIconSolid,
+  ChartBarIcon as ChartBarIconSolid,
   ChatBubbleLeftIcon as ChatIconSolid,
   HomeIcon as HomeIconSolid,
   UserCircleIcon as UserIconSolid,
@@ -59,6 +61,12 @@ export const menuLinks: HeaderMenuLink[] = [
     label: "Subscriptions",
     href: "/subscriptions",
     icon: <CreditCardIcon className="h-6 w-6" />,
+  },
+  {
+    label: "Earnings",
+    href: "/earnings",
+    icon: <ChartBarIcon className="h-6 w-6" />,
+    iconActive: <ChartBarIconSolid className="h-6 w-6" />,
   },
   {
     label: "Profile",
