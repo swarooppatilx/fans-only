@@ -10,6 +10,7 @@ import {
   BugAntIcon,
   ChartBarIcon,
   ChatBubbleLeftIcon,
+  Cog6ToothIcon,
   CreditCardIcon,
   HomeIcon,
   MagnifyingGlassIcon,
@@ -73,6 +74,11 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/profile",
     icon: <UserCircleIcon className="h-6 w-6" />,
     iconActive: <UserIconSolid className="h-6 w-6" />,
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: <Cog6ToothIcon className="h-6 w-6" />,
   },
   {
     label: "Debug",
