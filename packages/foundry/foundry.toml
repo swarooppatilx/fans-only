@@ -26,13 +26,16 @@ scrollSepolia = "https://sepolia-rpc.scroll.io"
 scroll = "https://rpc.scroll.io"
 pgn = "https://rpc.publicgoods.network"
 pgnTestnet = "https://sepolia.publicgoods.network"
-
+mantleSepolia = "https://rpc.sepolia.mantle.xyz"
+mantle = "https://rpc.mantle.xyz"
 
 localhost = "http://127.0.0.1:8545"
 
 [etherscan]
 polygonMumbai = { key = "${ETHERSCAN_API_KEY}" }
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
+mantleSepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.sepolia.mantlescan.xyz/api" }
+mantle = { key = "${ETHERSCAN_API_KEY}", url = "https://api.mantlescan.xyz/api" }
 
 
 

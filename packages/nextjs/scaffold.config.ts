@@ -1,4 +1,28 @@
+import { defineChain } from "viem";
 import * as chains from "viem/chains";
+
+// Define Mantle Sepolia Testnet
+export const mantleSepolia = defineChain({
+  id: 5003,
+  name: "Mantle Sepolia Testnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "MNT",
+    symbol: "MNT",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://rpc.sepolia.mantle.xyz"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Mantle Sepolia Explorer",
+      url: "https://explorer.sepolia.mantle.xyz",
+    },
+  },
+  testnet: true,
+});
 
 export type BaseConfig = {
   targetNetworks: readonly chains.Chain[];
@@ -15,7 +39,7 @@ export const DEFAULT_ALCHEMY_API_KEY = "cR4WnXePioePZ5fFrnSiR";
 
 const scaffoldConfig = {
   // The networks on which your DApp is live
-  targetNetworks: [chains.foundry],
+  targetNetworks: [mantleSepolia],
   // The interval at which your front-end polls the RPC servers for new data (it has no effect if you only target the local network (default is 4000))
   pollingInterval: 30000,
   // This is ours Alchemy's default API key.
@@ -26,8 +50,7 @@ const scaffoldConfig = {
   // If you want to use a different RPC for a specific network, you can add it here.
   // The key is the chain ID, and the value is the HTTP RPC URL
   rpcOverrides: {
-    // Example:
-    // [chains.mainnet.id]: "https://mainnet.rpc.buidlguidl.com",
+    [mantleSepolia.id]: "https://rpc.sepolia.mantle.xyz",
   },
   // This is ours WalletConnect's default project ID.
   // You can get your own at https://cloud.walletconnect.com
