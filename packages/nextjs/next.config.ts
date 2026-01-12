@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;
   },
+  // Required for wallet popup connections (Smart Wallet, etc.)
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [{ key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" }],
+      },
+    ];
+  },
 };
 
 const isIpfs = process.env.NEXT_PUBLIC_IPFS_BUILD === "true";
