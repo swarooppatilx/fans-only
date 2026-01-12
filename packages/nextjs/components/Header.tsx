@@ -9,6 +9,7 @@ import {
   BellIcon,
   BugAntIcon,
   ChatBubbleLeftIcon,
+  CreditCardIcon,
   HomeIcon,
   MagnifyingGlassIcon,
   PlusCircleIcon,
@@ -53,6 +54,11 @@ export const menuLinks: HeaderMenuLink[] = [
     href: "/messages",
     icon: <ChatBubbleLeftIcon className="h-6 w-6" />,
     iconActive: <ChatIconSolid className="h-6 w-6" />,
+  },
+  {
+    label: "Subscriptions",
+    href: "/subscriptions",
+    icon: <CreditCardIcon className="h-6 w-6" />,
   },
   {
     label: "Profile",
