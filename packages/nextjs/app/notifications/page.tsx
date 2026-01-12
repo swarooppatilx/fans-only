@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   BellIcon,
@@ -250,7 +251,14 @@ export default function NotificationsPage() {
                   <div className="relative flex-shrink-0">
                     {notification.avatar ? (
                       <div className="relative">
-                        <img src={notification.avatar} alt="" className="w-12 h-12 rounded-full bg-base-200" />
+                        <Image
+                          src={notification.avatar}
+                          alt=""
+                          width={48}
+                          height={48}
+                          className="rounded-full bg-base-200"
+                          unoptimized
+                        />
                         <div className="absolute -bottom-1 -right-1 p-1 bg-base-100 rounded-full">
                           <NotificationIcon type={notification.type} />
                         </div>

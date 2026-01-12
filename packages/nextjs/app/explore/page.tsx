@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import type { NextPage } from "next";
+import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { CheckBadgeIcon, MagnifyingGlassIcon, UserGroupIcon } from "@heroicons/react/24/outline";
-import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
+import { getIpfsUrl, useAllCreators, useCreator } from "~~/hooks/fansonly";
 
-// Mock data for demo - will be replaced with contract data
+// Mock data for demo when no contract data exists
 const mockCreators = [
   {
     address: "0x1234567890123456789012345678901234567890",
@@ -56,11 +58,22 @@ const mockCreators = [
 ];
 
 const CreatorCard = ({ creator }: { creator: (typeof mockCreators)[0] }) => {
+  // Format price - handle both string and bigint
+  const formatPrice = (price: string | bigint): string => {
+    if (typeof price === "bigint") {
+      return formatEther(price);
+    }
+    return price;
+  };
+
   return (
     <Link href={`/creator/${creator.username}`} className="block">
       <div className="fo-card-elevated group">
         {/* Banner */}
-        <div className="h-24 bg-gradient-to-r from-[--fo-primary] to-[--fo-accent] relative">
+        <div className="h-24 bg-gradient-to-r from-[--fo-primary] to-[--fo-accent] relative overflow-hidden">
+          {creator.bannerImageCID && (
+            <Image src={getIpfsUrl(creator.bannerImageCID)} alt="" fill className="object-cover" unoptimized />
+          )}
           <div className="absolute inset-0 bg-black/20" />
         </div>
 
@@ -69,9 +82,20 @@ const CreatorCard = ({ creator }: { creator: (typeof mockCreators)[0] }) => {
           {/* Avatar */}
           <div className="-mt-10 mb-3 relative inline-block">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-1">
-              <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-2xl font-bold text-[--fo-primary]">
-                {creator.displayName.charAt(0)}
-              </div>
+              {creator.profileImageCID ? (
+                <Image
+                  src={getIpfsUrl(creator.profileImageCID)}
+                  alt={creator.displayName}
+                  width={72}
+                  height={72}
+                  className="rounded-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-2xl font-bold text-[--fo-primary]">
+                  {creator.displayName.charAt(0)}
+                </div>
+              )}
             </div>
             {creator.isVerified && (
               <div className="absolute -right-1 bottom-1 bg-base-100 rounded-full p-0.5">
@@ -94,9 +118,14 @@ const CreatorCard = ({ creator }: { creator: (typeof mockCreators)[0] }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1 text-sm text-[--fo-text-secondary]">
               <UserGroupIcon className="w-4 h-4" />
-              <span>{creator.totalSubscribers} subscribers</span>
+              <span>
+                {typeof creator.totalSubscribers === "bigint"
+                  ? Number(creator.totalSubscribers)
+                  : creator.totalSubscribers}{" "}
+                subscribers
+              </span>
             </div>
-            <div className="text-sm font-semibold text-[--fo-primary]">From {creator.tierPrice} MNT</div>
+            <div className="text-sm font-semibold text-[--fo-primary]">From {formatPrice(creator.tierPrice)} MNT</div>
           </div>
         </div>
       </div>
@@ -104,16 +133,63 @@ const CreatorCard = ({ creator }: { creator: (typeof mockCreators)[0] }) => {
   );
 };
 
+// Component to fetch and display a creator from chain data
+const OnChainCreatorCard = ({ creatorAddress }: { creatorAddress: string }) => {
+  const { creator, tiers, isLoading, isCreator: exists } = useCreator(creatorAddress);
+
+  if (isLoading) {
+    return (
+      <div className="fo-card-elevated animate-pulse">
+        <div className="h-24 bg-base-300" />
+        <div className="p-4 pt-0">
+          <div className="-mt-10 mb-3">
+            <div className="w-20 h-20 rounded-full bg-base-300" />
+          </div>
+          <div className="h-4 bg-base-300 rounded w-3/4 mb-2" />
+          <div className="h-3 bg-base-300 rounded w-1/2 mb-4" />
+          <div className="h-12 bg-base-300 rounded mb-4" />
+          <div className="h-4 bg-base-300 rounded w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!exists || !creator || !creator.isActive) {
+    return null;
+  }
+
+  // Get minimum tier price
+  const activeTiers = tiers.filter(t => t.isActive);
+  const minPrice =
+    activeTiers.length > 0
+      ? activeTiers.reduce((min, t) => (t.price < min ? t.price : min), activeTiers[0].price)
+      : BigInt(0);
+
+  const creatorData = {
+    address: creatorAddress,
+    username: creator.username,
+    displayName: creator.displayName,
+    bio: creator.bio,
+    profileImageCID: creator.profileImageCID,
+    bannerImageCID: creator.bannerImageCID,
+    isVerified: creator.isVerified,
+    totalSubscribers: creator.totalSubscribers,
+    tierPrice: minPrice,
+  };
+
+  return <CreatorCard creator={creatorData as any} />;
+};
+
 const ExplorePage: NextPage = () => {
   const { address: connectedAddress } = useAccount();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  // Read total creators from contract
-  const { data: totalCreators } = useScaffoldReadContract({
-    contractName: "CreatorProfile",
-    functionName: "getTotalCreators",
-  });
+  // Read creators from contract
+  const { totalCreators, creatorAddresses, isLoading: isLoadingCreators } = useAllCreators(0, 50);
+
+  // Determine if we should show contract data or mock data
+  const hasContractData = totalCreators > 0 && creatorAddresses.length > 0;
 
   const categories = [
     { id: "all", label: "All Creators" },
@@ -181,19 +257,47 @@ const ExplorePage: NextPage = () => {
       <div className="bg-base-200 border-b border-[--fo-border]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between text-sm">
           <span className="text-[--fo-text-secondary]">
-            <span className="font-semibold text-base-content">{filteredCreators.length}</span> creators found
+            <span className="font-semibold text-base-content">
+              {hasContractData ? creatorAddresses.length : filteredCreators.length}
+            </span>{" "}
+            creators {hasContractData ? "on-chain" : "found"}
           </span>
-          {totalCreators !== undefined && (
+          {totalCreators > 0 && (
             <span className="text-[--fo-text-muted]">
-              Total on-chain: <span className="font-semibold text-[--fo-primary]">{totalCreators.toString()}</span>
+              Total registered: <span className="font-semibold text-[--fo-primary]">{totalCreators}</span>
             </span>
           )}
+          {!hasContractData && <span className="text-amber-500 text-xs">Showing demo data</span>}
         </div>
       </div>
 
       {/* Creators Grid */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {filteredCreators.length > 0 ? (
+        {isLoadingCreators ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="fo-card-elevated animate-pulse">
+                <div className="h-24 bg-base-300" />
+                <div className="p-4 pt-0">
+                  <div className="-mt-10 mb-3">
+                    <div className="w-20 h-20 rounded-full bg-base-300" />
+                  </div>
+                  <div className="h-4 bg-base-300 rounded w-3/4 mb-2" />
+                  <div className="h-3 bg-base-300 rounded w-1/2 mb-4" />
+                  <div className="h-12 bg-base-300 rounded mb-4" />
+                  <div className="h-4 bg-base-300 rounded w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : hasContractData ? (
+          // Show on-chain creators
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {creatorAddresses.map(address => (
+              <OnChainCreatorCard key={address} creatorAddress={address} />
+            ))}
+          </div>
+        ) : filteredCreators.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredCreators.map((creator, index) => (
               <CreatorCard key={index} creator={creator} />
