@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Address } from "@scaffold-ui/components";
 import type { NextPage } from "next";
-import { parseEther } from "viem";
+import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import {
   ChatBubbleLeftIcon,
@@ -17,9 +18,10 @@ import {
   ShareIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
-import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import { SubscriptionTier, getIpfsUrl, useCreatorByUsername, useSubscribe, useSubscription } from "~~/hooks/fansonly";
+import { AccessLevel, Post, useCreatorPosts } from "~~/hooks/fansonly";
 
-// Mock creator data - will be replaced with contract reads
+// Mock creator data - used when no on-chain data exists
 const mockCreator = {
   address: "0x1234567890123456789012345678901234567890" as `0x${string}`,
   username: "cryptoartist",
@@ -29,95 +31,100 @@ const mockCreator = {
   bannerImageCID: "",
   isVerified: true,
   isActive: true,
-  totalSubscribers: 156,
-  totalPosts: 47,
-  joinedDate: "2024-06-15",
+  totalSubscribers: BigInt(156),
+  totalEarnings: BigInt(0),
+  createdAt: BigInt(1718496000),
   tiers: [
     {
-      id: 0,
       name: "Fan",
-      price: "0.01",
+      price: BigInt(10000000000000000),
       description: "Access to public posts and community chat",
       isActive: true,
     },
     {
-      id: 1,
       name: "Supporter",
-      price: "0.05",
+      price: BigInt(50000000000000000),
       description: "Exclusive content, early access, and monthly wallpapers",
       isActive: true,
     },
     {
-      id: 2,
       name: "VIP",
-      price: "0.15",
+      price: BigInt(150000000000000000),
       description: "All previous perks + personalized artwork requests",
       isActive: true,
     },
-  ],
+  ] as SubscriptionTier[],
 };
 
-// Mock posts
-const mockPosts = [
+// Mock posts for demo
+const mockPosts: Post[] = [
   {
-    id: 1,
+    id: BigInt(1),
+    creator: mockCreator.address,
     contentCID: "",
+    previewCID: "",
     caption: "Just finished this new piece! What do you think? 🔥",
-    contentType: "IMAGE",
-    accessLevel: "PUBLIC",
-    requiredTier: 0,
-    likes: 42,
-    comments: 8,
-    createdAt: "2024-12-10T15:30:00Z",
-    isLocked: false,
+    contentType: 1,
+    accessLevel: AccessLevel.PUBLIC,
+    requiredTierId: BigInt(0),
+    likesCount: BigInt(42),
+    commentsCount: BigInt(8),
+    createdAt: BigInt(Math.floor(Date.now() / 1000) - 86400),
+    isActive: true,
   },
   {
-    id: 2,
+    id: BigInt(2),
+    creator: mockCreator.address,
     contentCID: "",
+    previewCID: "",
     caption: "Behind the scenes of my latest collection - exclusive for supporters! 🎨",
-    contentType: "IMAGE",
-    accessLevel: "TIER_GATED",
-    requiredTier: 1,
-    likes: 28,
-    comments: 5,
-    createdAt: "2024-12-09T10:00:00Z",
-    isLocked: true,
+    contentType: 1,
+    accessLevel: AccessLevel.TIER_GATED,
+    requiredTierId: BigInt(1),
+    likesCount: BigInt(28),
+    commentsCount: BigInt(5),
+    createdAt: BigInt(Math.floor(Date.now() / 1000) - 172800),
+    isActive: true,
   },
   {
-    id: 3,
+    id: BigInt(3),
+    creator: mockCreator.address,
     contentCID: "",
+    previewCID: "",
     caption: "New tutorial dropping this week - how I create my signature style ✨",
-    contentType: "VIDEO",
-    accessLevel: "SUBSCRIBERS",
-    requiredTier: 0,
-    likes: 67,
-    comments: 12,
-    createdAt: "2024-12-08T18:45:00Z",
-    isLocked: true,
+    contentType: 2,
+    accessLevel: AccessLevel.SUBSCRIBERS,
+    requiredTierId: BigInt(0),
+    likesCount: BigInt(67),
+    commentsCount: BigInt(12),
+    createdAt: BigInt(Math.floor(Date.now() / 1000) - 259200),
+    isActive: true,
   },
 ];
 
 const TierCard = ({
   tier,
-  isSubscribed,
+  isCurrentTier,
   onSubscribe,
   isLoading,
 }: {
-  tier: (typeof mockCreator.tiers)[0];
-  isSubscribed: boolean;
+  tier: SubscriptionTier;
+  isCurrentTier: boolean;
   onSubscribe: () => void;
   isLoading: boolean;
 }) => {
+  const priceInEth = formatEther(tier.price);
+
   return (
-    <div className={`fo-tier-card ${isSubscribed ? "selected" : ""}`}>
+    <div className={`fo-tier-card ${isCurrentTier ? "selected" : ""}`}>
       <h3 className="text-lg font-bold mb-1">{tier.name}</h3>
-      <div className="text-2xl font-bold text-[--fo-primary] mb-2">{tier.price} MNT</div>
+      <div className="text-2xl font-bold text-[--fo-primary] mb-2">{priceInEth} MNT</div>
       <p className="text-sm text-[--fo-text-secondary] mb-4">{tier.description}</p>
-      {isSubscribed ? (
+      {isCurrentTier ? (
         <div className="fo-badge-verified">Subscribed</div>
       ) : (
-        <button onClick={onSubscribe} disabled={isLoading} className="fo-btn-subscribe w-full">
-          {isLoading ? "Processing..." : "Subscribe"}
+        <button onClick={onSubscribe} disabled={isLoading || !tier.isActive} className="fo-btn-subscribe w-full">
+          {isLoading ? "Processing..." : !tier.isActive ? "Unavailable" : "Subscribe"}
         </button>
       )}
     </div>
@@ -126,21 +133,37 @@ const TierCard = ({
 
 const PostCard = ({
   post,
-  creator,
+  creatorName,
+  creatorVerified,
+  profileImageCID,
   isSubscribed,
-  subscribedTier,
+  subscribedTierId,
 }: {
-  post: (typeof mockPosts)[0];
-  creator: typeof mockCreator;
+  post: Post;
+  creatorName: string;
+  creatorVerified: boolean;
+  profileImageCID: string;
   isSubscribed: boolean;
-  subscribedTier: number;
+  subscribedTierId: bigint;
 }) => {
   const [liked, setLiked] = useState(false);
-  const canView = post.accessLevel === "PUBLIC" || (isSubscribed && subscribedTier >= post.requiredTier);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+  // Check if user can view this content
+  const canView =
+    post.accessLevel === AccessLevel.PUBLIC ||
+    (isSubscribed && post.accessLevel === AccessLevel.SUBSCRIBERS) ||
+    (isSubscribed && post.accessLevel === AccessLevel.TIER_GATED && subscribedTierId >= post.requiredTierId);
+
+  const formatDate = (timestamp: bigint) => {
+    const date = new Date(Number(timestamp) * 1000);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  const getAccessLabel = () => {
+    if (post.accessLevel === AccessLevel.SUBSCRIBERS) {
+      return "Subscribe to unlock this content";
+    }
+    return `Tier ${Number(post.requiredTierId) + 1} required`;
   };
 
   return (
@@ -148,14 +171,25 @@ const PostCard = ({
       {/* Header */}
       <div className="fo-post-header">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-0.5">
-          <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-sm font-bold text-[--fo-primary]">
-            {creator.displayName.charAt(0)}
-          </div>
+          {profileImageCID ? (
+            <Image
+              src={getIpfsUrl(profileImageCID)}
+              alt={creatorName}
+              width={36}
+              height={36}
+              className="rounded-full object-cover"
+              unoptimized
+            />
+          ) : (
+            <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-sm font-bold text-[--fo-primary]">
+              {creatorName.charAt(0)}
+            </div>
+          )}
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-1">
-            <span className="font-semibold">{creator.displayName}</span>
-            {creator.isVerified && <CheckBadgeIcon className="w-4 h-4 text-[--fo-primary]" />}
+            <span className="font-semibold">{creatorName}</span>
+            {creatorVerified && <CheckBadgeIcon className="w-4 h-4 text-[--fo-primary]" />}
           </div>
           <span className="text-sm text-[--fo-text-muted]">{formatDate(post.createdAt)}</span>
         </div>
@@ -173,21 +207,26 @@ const PostCard = ({
       <div className="relative">
         {canView ? (
           <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
-            <PhotoIcon className="w-16 h-16 text-[--fo-text-muted]" />
+            {post.contentCID ? (
+              <Image src={getIpfsUrl(post.contentCID)} alt="" fill className="object-cover" unoptimized />
+            ) : (
+              <PhotoIcon className="w-16 h-16 text-[--fo-text-muted]" />
+            )}
           </div>
         ) : (
           <div className="fo-post-media relative">
             <div className="absolute inset-0 bg-gradient-to-br from-base-300 to-base-200" />
+            {post.previewCID && (
+              <Image src={getIpfsUrl(post.previewCID)} alt="" fill className="object-cover blur-xl" unoptimized />
+            )}
             <div className="absolute inset-0 backdrop-blur-xl flex flex-col items-center justify-center gap-3 p-4">
               <div className="w-16 h-16 rounded-full bg-base-100/80 flex items-center justify-center">
                 <LockClosedIcon className="w-8 h-8 text-[--fo-primary]" />
               </div>
-              <p className="text-center font-medium">
-                {post.accessLevel === "SUBSCRIBERS"
-                  ? "Subscribe to unlock this content"
-                  : `Tier ${post.requiredTier + 1} required`}
-              </p>
-              <button className="fo-btn-subscribe text-xs">Subscribe to Unlock</button>
+              <p className="text-center font-medium">{getAccessLabel()}</p>
+              <a href="#tiers" className="fo-btn-subscribe text-xs">
+                Subscribe to Unlock
+              </a>
             </div>
           </div>
         )}
@@ -197,11 +236,11 @@ const PostCard = ({
       <div className="fo-post-actions">
         <button className="fo-post-action" onClick={() => setLiked(!liked)}>
           {liked ? <HeartSolidIcon className="w-5 h-5 text-red-500" /> : <HeartIcon className="w-5 h-5" />}
-          <span>{liked ? post.likes + 1 : post.likes}</span>
+          <span>{liked ? Number(post.likesCount) + 1 : Number(post.likesCount)}</span>
         </button>
         <button className="fo-post-action">
           <ChatBubbleLeftIcon className="w-5 h-5" />
-          <span>{post.comments}</span>
+          <span>{Number(post.commentsCount)}</span>
         </button>
         <button className="fo-post-action ml-auto">
           <ShareIcon className="w-5 h-5" />
@@ -215,40 +254,95 @@ const CreatorProfilePage: NextPage = () => {
   const params = useParams();
   const username = params.username as string;
   const { address: connectedAddress } = useAccount();
-
   const [activeTab, setActiveTab] = useState<"posts" | "media" | "about">("posts");
 
-  // Contract interactions (using mock data for now)
-  const { writeContractAsync: subscribe, isPending: isSubscribing } = useScaffoldWriteContract("CreatorProfile");
+  // Fetch creator data from contract
+  const { creatorAddress, creator, tiers, isLoading: isLoadingCreator } = useCreatorByUsername(username);
 
-  // Mock subscription state - will use username to lookup creator from contract
-  const isSubscribed = false;
-  const subscribedTier = -1;
+  // Fetch subscription status
+  const { isSubscribed, subscription, isLoading: isLoadingSubscription } = useSubscription(creatorAddress);
 
-  // For now use mock data, will be replaced with contract lookup by username
-  const creator = { ...mockCreator, username };
+  // Fetch creator posts
+  const { posts, isLoading: isLoadingPosts } = useCreatorPosts(creatorAddress, 0, 50);
 
-  const handleSubscribe = async (tierIndex: number, price: string) => {
+  // Subscribe hook
+  const { subscribe, isPending: isSubscribing } = useSubscribe();
+
+  // Determine if we have on-chain data or should use mock
+  const hasOnChainData = !!creatorAddress && !!creator && creator.isActive;
+
+  // Use real data or fallback to mock
+  const displayCreator = hasOnChainData
+    ? {
+        address: creatorAddress as `0x${string}`,
+        username: creator!.username,
+        displayName: creator!.displayName,
+        bio: creator!.bio,
+        profileImageCID: creator!.profileImageCID,
+        bannerImageCID: creator!.bannerImageCID,
+        isVerified: creator!.isVerified,
+        isActive: creator!.isActive,
+        totalSubscribers: creator!.totalSubscribers,
+        totalEarnings: creator!.totalEarnings,
+        createdAt: creator!.createdAt,
+        tiers: tiers,
+      }
+    : { ...mockCreator, username };
+
+  const displayPosts = hasOnChainData && posts.length > 0 ? posts : mockPosts;
+  const displayTiers = displayCreator.tiers;
+
+  const subscribedTierId = subscription?.tierId ?? BigInt(-1);
+
+  const handleSubscribe = async (tierIndex: number, price: bigint) => {
     if (!connectedAddress) {
       alert("Please connect your wallet");
       return;
     }
 
+    if (!creatorAddress) {
+      alert("Creator not found on-chain");
+      return;
+    }
+
     try {
-      await subscribe({
-        functionName: "subscribe",
-        args: [creator.address, BigInt(tierIndex)],
-        value: parseEther(price),
-      });
+      await subscribe(creatorAddress, BigInt(tierIndex), price);
     } catch (error) {
       console.error("Subscription failed:", error);
     }
   };
 
+  const formatJoinDate = (timestamp: bigint) => {
+    const date = new Date(Number(timestamp) * 1000);
+    return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  };
+
+  const isLoading = isLoadingCreator || isLoadingSubscription;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        {/* Loading skeleton */}
+        <div className="h-48 md:h-64 bg-base-300 animate-pulse" />
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="-mt-16 md:-mt-20 mb-4">
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-base-300 animate-pulse" />
+          </div>
+          <div className="h-8 bg-base-300 rounded w-1/3 mb-2 animate-pulse" />
+          <div className="h-4 bg-base-300 rounded w-1/4 mb-4 animate-pulse" />
+          <div className="h-20 bg-base-300 rounded mb-6 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       {/* Banner */}
-      <div className="h-48 md:h-64 bg-gradient-to-r from-[--fo-primary] to-[--fo-accent] relative">
+      <div className="h-48 md:h-64 bg-gradient-to-r from-[--fo-primary] to-[--fo-accent] relative overflow-hidden">
+        {displayCreator.bannerImageCID && (
+          <Image src={getIpfsUrl(displayCreator.bannerImageCID)} alt="" fill className="object-cover" unoptimized />
+        )}
         <div className="absolute inset-0 bg-black/20" />
       </div>
 
@@ -257,29 +351,45 @@ const CreatorProfilePage: NextPage = () => {
         <div className="flex flex-col md:flex-row md:items-end gap-4">
           {/* Avatar */}
           <div className="-mt-16 md:-mt-20">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-1 ring-4 ring-base-100">
-              <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-4xl md:text-5xl font-bold text-[--fo-primary]">
-                {creator.displayName.charAt(0)}
-              </div>
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-1 ring-4 ring-base-100 overflow-hidden">
+              {displayCreator.profileImageCID ? (
+                <Image
+                  src={getIpfsUrl(displayCreator.profileImageCID)}
+                  alt={displayCreator.displayName}
+                  width={156}
+                  height={156}
+                  className="rounded-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-4xl md:text-5xl font-bold text-[--fo-primary]">
+                  {displayCreator.displayName.charAt(0)}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Info */}
           <div className="flex-1 pb-4">
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl md:text-3xl font-bold">{creator.displayName}</h1>
-              {creator.isVerified && <CheckBadgeIcon className="w-6 h-6 text-[--fo-primary]" />}
+              <h1 className="text-2xl md:text-3xl font-bold">{displayCreator.displayName}</h1>
+              {displayCreator.isVerified && <CheckBadgeIcon className="w-6 h-6 text-[--fo-primary]" />}
             </div>
-            <p className="text-[--fo-text-secondary] mb-2">@{creator.username}</p>
+            <p className="text-[--fo-text-secondary] mb-2">@{displayCreator.username}</p>
             <div className="flex items-center gap-1 text-sm text-[--fo-text-muted]">
-              <Address address={creator.address} />
+              <Address address={displayCreator.address} />
             </div>
+            {!hasOnChainData && (
+              <span className="inline-block mt-2 px-2 py-1 bg-amber-500/10 text-amber-600 text-xs rounded">
+                Demo Profile
+              </span>
+            )}
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pb-4">
-            {connectedAddress === creator.address ? (
-              <Link href="/profile/edit" className="fo-btn-secondary">
+            {connectedAddress === displayCreator.address ? (
+              <Link href="/settings" className="fo-btn-secondary">
                 Edit Profile
               </Link>
             ) : isSubscribed ? (
@@ -295,33 +405,33 @@ const CreatorProfilePage: NextPage = () => {
 
       {/* Bio & Stats */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <p className="text-base-content mb-6">{creator.bio}</p>
+        <p className="text-base-content mb-6">{displayCreator.bio}</p>
 
         <div className="flex gap-8 mb-6">
           <div className="fo-stat">
-            <div className="fo-stat-value">{creator.totalSubscribers}</div>
+            <div className="fo-stat-value">{Number(displayCreator.totalSubscribers)}</div>
             <div className="fo-stat-label">Subscribers</div>
           </div>
           <div className="fo-stat">
-            <div className="fo-stat-value">{creator.totalPosts}</div>
+            <div className="fo-stat-value">{displayPosts.length}</div>
             <div className="fo-stat-label">Posts</div>
           </div>
           <div className="fo-stat">
-            <div className="fo-stat-value">{creator.tiers.length}</div>
+            <div className="fo-stat-value">{displayTiers.filter(t => t.isActive).length}</div>
             <div className="fo-stat-label">Tiers</div>
           </div>
         </div>
 
         {/* Subscription Tiers */}
-        {!isSubscribed && (
+        {!isSubscribed && displayTiers.length > 0 && (
           <div id="tiers" className="mb-8 scroll-mt-20">
             <h2 className="text-xl font-bold mb-4">Subscription Tiers</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {creator.tiers.map((tier, index) => (
+              {displayTiers.map((tier, index) => (
                 <TierCard
-                  key={tier.id}
+                  key={index}
                   tier={tier}
-                  isSubscribed={subscribedTier >= index}
+                  isCurrentTier={isSubscribed && Number(subscribedTierId) === index}
                   onSubscribe={() => handleSubscribe(index, tier.price)}
                   isLoading={isSubscribing}
                 />
@@ -352,52 +462,93 @@ const CreatorProfilePage: NextPage = () => {
         {/* Content */}
         {activeTab === "posts" && (
           <div className="space-y-4">
-            {mockPosts.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                creator={creator}
-                isSubscribed={isSubscribed}
-                subscribedTier={subscribedTier}
-              />
-            ))}
+            {isLoadingPosts ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="fo-card p-4 animate-pulse">
+                    <div className="flex gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-base-300" />
+                      <div className="flex-1">
+                        <div className="h-4 bg-base-300 rounded w-1/4 mb-1" />
+                        <div className="h-3 bg-base-300 rounded w-1/6" />
+                      </div>
+                    </div>
+                    <div className="h-4 bg-base-300 rounded w-3/4 mb-4" />
+                    <div className="h-48 bg-base-300 rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : displayPosts.length > 0 ? (
+              displayPosts.map(post => (
+                <PostCard
+                  key={Number(post.id)}
+                  post={post}
+                  creatorName={displayCreator.displayName}
+                  creatorVerified={displayCreator.isVerified}
+                  profileImageCID={displayCreator.profileImageCID}
+                  isSubscribed={isSubscribed}
+                  subscribedTierId={subscribedTierId}
+                />
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <PhotoIcon className="w-16 h-16 mx-auto text-[--fo-text-muted] mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
+                <p className="text-[--fo-text-secondary]">This creator hasn&apos;t posted anything yet.</p>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === "media" && (
           <div className="grid grid-cols-3 gap-1">
-            {mockPosts
-              .filter(p => p.contentType === "IMAGE" || p.contentType === "VIDEO")
-              .map(post => (
-                <div
-                  key={post.id}
-                  className="aspect-square bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 relative"
-                >
-                  {!post.isLocked || isSubscribed ? (
-                    <PhotoIcon className="w-8 h-8 text-[--fo-text-muted] absolute inset-0 m-auto" />
-                  ) : (
-                    <div className="absolute inset-0 bg-base-300/80 backdrop-blur flex items-center justify-center">
-                      <LockClosedIcon className="w-8 h-8 text-[--fo-text-muted]" />
-                    </div>
-                  )}
-                </div>
-              ))}
+            {displayPosts
+              .filter(p => p.contentType === 1 || p.contentType === 2)
+              .map(post => {
+                const canView =
+                  post.accessLevel === AccessLevel.PUBLIC ||
+                  (isSubscribed && post.accessLevel === AccessLevel.SUBSCRIBERS) ||
+                  (isSubscribed && subscribedTierId >= post.requiredTierId);
+
+                return (
+                  <div
+                    key={Number(post.id)}
+                    className="aspect-square bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 relative overflow-hidden"
+                  >
+                    {canView && post.contentCID ? (
+                      <Image src={getIpfsUrl(post.contentCID)} alt="" fill className="object-cover" unoptimized />
+                    ) : canView ? (
+                      <PhotoIcon className="w-8 h-8 text-[--fo-text-muted] absolute inset-0 m-auto" />
+                    ) : (
+                      <div className="absolute inset-0 bg-base-300/80 backdrop-blur flex items-center justify-center">
+                        <LockClosedIcon className="w-8 h-8 text-[--fo-text-muted]" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
           </div>
         )}
 
         {activeTab === "about" && (
           <div className="fo-card p-6">
-            <h3 className="font-bold mb-4">About {creator.displayName}</h3>
-            <p className="text-[--fo-text-secondary] mb-4">{creator.bio}</p>
+            <h3 className="font-bold mb-4">About {displayCreator.displayName}</h3>
+            <p className="text-[--fo-text-secondary] mb-4">{displayCreator.bio}</p>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-[--fo-text-muted]">Joined</span>
-                <span>{new Date(creator.joinedDate).toLocaleDateString()}</span>
+                <span>{formatJoinDate(displayCreator.createdAt)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[--fo-text-muted]">Wallet</span>
-                <Address address={creator.address} />
+                <Address address={displayCreator.address} />
               </div>
+              {hasOnChainData && (
+                <div className="flex justify-between">
+                  <span className="text-[--fo-text-muted]">Total Earned</span>
+                  <span className="font-semibold text-green-600">{formatEther(displayCreator.totalEarnings)} MNT</span>
+                </div>
+              )}
             </div>
           </div>
         )}
