@@ -33,7 +33,7 @@ type HeaderMenuLink = {
 export const menuLinks: HeaderMenuLink[] = [
   {
     label: "Home",
-    href: "/",
+    href: "/feed",
     icon: <HomeIcon className="h-6 w-6" />,
     iconActive: <HomeIconSolid className="h-6 w-6" />,
   },
