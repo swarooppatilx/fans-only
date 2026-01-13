@@ -16,6 +16,7 @@ import {
   UserGroupIcon,
   UserPlusIcon,
 } from "@heroicons/react/24/outline";
+import { TierManager } from "~~/components/fansonly/TierManager";
 import { useCreatorPosts } from "~~/hooks/fansonly/useContentPost";
 import { useCreator, useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfile";
 
@@ -26,12 +27,6 @@ const mockEarningsData = {
   postCount: 47,
   totalLikes: 1243,
 };
-
-const mockTierBreakdown = [
-  { name: "Fan", subscribers: 89, revenue: BigInt("890000000000000000"), percentage: 57 },
-  { name: "Supporter", subscribers: 52, revenue: BigInt("2600000000000000000"), percentage: 33 },
-  { name: "VIP", subscribers: 15, revenue: BigInt("2250000000000000000"), percentage: 10 },
-];
 
 const mockRecentTransactions = [
   {
@@ -120,7 +115,7 @@ const EarningsPage: NextPage = () => {
   const { isCreator, creator, isLoading: isLoadingCreator } = useCurrentCreator();
 
   // Get creator tiers
-  const { tiers } = useCreator(connectedAddress);
+  const { tiers, refetch: refetchTiers } = useCreator(connectedAddress);
 
   // Get post stats
   const { postCount, posts, isLoading: isLoadingPosts } = useCreatorPosts(connectedAddress, 0, 100);
@@ -141,25 +136,6 @@ const EarningsPage: NextPage = () => {
     postCount: hasRealData ? postCount : mockEarningsData.postCount,
     totalLikes: hasRealData ? totalLikes : mockEarningsData.totalLikes,
   };
-
-  // Calculate tier breakdown from real tiers
-  const tierBreakdown = useMemo(() => {
-    if (!hasRealData || !tiers || tiers.length === 0) {
-      return mockTierBreakdown;
-    }
-
-    // For now, we can't get per-tier subscriber counts from the contract
-    // so we'll show tiers with their prices
-    return tiers
-      .filter(tier => tier.isActive)
-      .map((tier, idx) => ({
-        name: tier.name,
-        subscribers: 0, // Would need contract events to track this
-        revenue: BigInt(0), // Would need contract events to track this
-        percentage: Math.floor(100 / tiers.length) * (idx + 1),
-        price: tier.price,
-      }));
-  }, [hasRealData, tiers]);
 
   const formatTimeAgo = (timestamp: number) => {
     const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -315,42 +291,8 @@ const EarningsPage: NextPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Tier Breakdown */}
-          <div className="fo-card p-6">
-            <h2 className="text-lg font-bold mb-4">Your Subscription Tiers</h2>
-            {tierBreakdown.length > 0 ? (
-              <div className="space-y-4">
-                {tierBreakdown.map((tier, index) => (
-                  <div key={index}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">{tier.name}</span>
-                        {"price" in tier && (
-                          <span className="text-sm text-[--fo-text-muted]">
-                            {formatEther(tier.price as bigint)} MNT/month
-                          </span>
-                        )}
-                      </div>
-                      {!("price" in tier) && <span className="font-semibold">{formatEther(tier.revenue)} MNT</span>}
-                    </div>
-                    <div className="h-2 bg-base-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-[--fo-primary] to-[--fo-accent] transition-all"
-                        style={{ width: `${tier.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-[--fo-text-muted]">
-                <p>No tiers created yet</p>
-                <Link href="/profile/create" className="text-[--fo-primary] text-sm hover:underline mt-2 inline-block">
-                  Create subscription tiers
-                </Link>
-              </div>
-            )}
-          </div>
+          {/* Tier Management */}
+          <TierManager tiers={tiers} onTierCreated={() => refetchTiers()} />
 
           {/* Recent Transactions */}
           <div className="fo-card p-6">
