@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { NextPage } from "next";
 import { parseEther } from "viem";
@@ -12,8 +12,14 @@ import {
   TrashIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { FileUpload } from "~~/components/FileUpload";
-import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import {
+  useCreateTier,
+  useCreatorByUsername,
+  useCurrentCreator,
+  useRegisterCreator,
+} from "~~/hooks/fansonly/useCreatorProfile";
 
 interface TierInput {
   name: string;
@@ -25,6 +31,9 @@ const CreateProfilePage: NextPage = () => {
   const router = useRouter();
   const { address: connectedAddress, isConnected } = useAccount();
 
+  // Check if user is already a creator
+  const { isCreator, creator: existingCreator, isLoading: isLoadingCurrentCreator } = useCurrentCreator();
+
   // Form state
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -35,18 +44,46 @@ const CreateProfilePage: NextPage = () => {
     { name: "Basic", price: "0.01", description: "Access to subscriber-only content" },
   ]);
 
+  // Username availability check
+  const [debouncedUsername, setDebouncedUsername] = useState("");
+  const { creatorAddress: existingUsernameAddress, isLoading: isCheckingUsername } =
+    useCreatorByUsername(debouncedUsername);
+  const isUsernameTaken =
+    debouncedUsername.length >= 3 &&
+    existingUsernameAddress &&
+    existingUsernameAddress !== "0x0000000000000000000000000000000000000000";
+
+  // Debounce username check
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (username.length >= 3) {
+        setDebouncedUsername(username);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username]);
+
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState(1);
 
-  // Contract interaction
-  const { writeContractAsync: registerCreator, isPending: isRegistering } = useScaffoldWriteContract("CreatorProfile");
+  // Contract hooks
+  const { registerCreator, isPending: isRegistering, error: registerError } = useRegisterCreator();
+  const { createTier, isPending: isCreatingTier } = useCreateTier();
+
+  // Redirect if already a creator
+  useEffect(() => {
+    if (!isLoadingCurrentCreator && isCreator && existingCreator?.username) {
+      router.push(`/creator/${existingCreator.username}`);
+    }
+  }, [isLoadingCurrentCreator, isCreator, existingCreator, router]);
 
   // Validation functions
   const validateUsername = (value: string): string | null => {
     if (value.length < 3) return "Username must be at least 3 characters";
     if (value.length > 20) return "Username must be 20 characters or less";
     if (!/^[a-zA-Z0-9_]+$/.test(value)) return "Only letters, numbers, and underscores allowed";
+    if (isUsernameTaken) return "Username is already taken";
     return null;
   };
 
@@ -116,7 +153,7 @@ const CreateProfilePage: NextPage = () => {
   // Submit handler
   const handleSubmit = async () => {
     if (!isConnected || !connectedAddress) {
-      alert("Please connect your wallet first");
+      setErrors({ submit: "Please connect your wallet first" });
       return;
     }
 
@@ -124,26 +161,40 @@ const CreateProfilePage: NextPage = () => {
 
     try {
       // Register creator profile
-      await registerCreator({
-        functionName: "registerCreator",
-        args: [username, displayName, bio, profileImageCID, bannerImageCID],
-      });
+      await registerCreator(username, displayName, bio, profileImageCID, bannerImageCID);
+
+      // Wait a moment for the transaction to be confirmed
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Add tiers one by one
       for (const tier of tiers) {
-        await registerCreator({
-          functionName: "createTier",
-          args: [tier.name, tier.description, parseEther(tier.price)],
-        });
+        await createTier(tier.name, tier.description, parseEther(tier.price));
+        // Small delay between tier creations
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       // Redirect to profile
       router.push(`/creator/${username}`);
     } catch (error) {
       console.error("Registration failed:", error);
-      setErrors({ submit: "Registration failed. Please try again." });
+      const errorMessage = error instanceof Error ? error.message : "Registration failed. Please try again.";
+      setErrors({ submit: errorMessage });
     }
   };
+
+  const isPending = isRegistering || isCreatingTier;
+
+  // Loading state while checking if user is already a creator
+  if (isLoadingCurrentCreator) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg text-[--fo-primary]"></div>
+          <p className="mt-4 text-[--fo-text-muted]">Checking your status...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isConnected) {
     return (
@@ -201,14 +252,38 @@ const CreateProfilePage: NextPage = () => {
                   value={username}
                   onChange={e => setUsername(e.target.value.toLowerCase())}
                   placeholder="yourname"
-                  className={`fo-input pl-8 ${errors.username ? "border-[--fo-error]" : ""}`}
+                  className={`fo-input pl-8 pr-10 ${errors.username || isUsernameTaken ? "border-[--fo-error]" : ""}`}
                   maxLength={20}
                 />
+                {/* Username availability indicator */}
+                {username.length >= 3 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {isCheckingUsername ? (
+                      <div className="loading loading-spinner loading-sm text-[--fo-text-muted]"></div>
+                    ) : isUsernameTaken ? (
+                      <XMarkIcon className="w-5 h-5 text-[--fo-error]" />
+                    ) : (
+                      <CheckIcon className="w-5 h-5 text-[--fo-success]" />
+                    )}
+                  </div>
+                )}
               </div>
               {errors.username && (
                 <p className="text-[--fo-error] text-sm mt-1 flex items-center gap-1">
                   <ExclamationCircleIcon className="w-4 h-4" />
                   {errors.username}
+                </p>
+              )}
+              {!errors.username && isUsernameTaken && (
+                <p className="text-[--fo-error] text-sm mt-1 flex items-center gap-1">
+                  <ExclamationCircleIcon className="w-4 h-4" />
+                  Username is already taken
+                </p>
+              )}
+              {!errors.username && !isUsernameTaken && username.length >= 3 && !isCheckingUsername && (
+                <p className="text-[--fo-success] text-sm mt-1 flex items-center gap-1">
+                  <CheckCircleIcon className="w-4 h-4" />
+                  Username is available
                 </p>
               )}
               <p className="text-[--fo-text-muted] text-sm mt-1">
@@ -270,7 +345,12 @@ const CreateProfilePage: NextPage = () => {
                 onUpload={cid => setProfileImageCID(cid)}
                 placeholder="Upload your profile picture"
               />
-              {profileImageCID && <p className="text-[--fo-text-muted] text-sm mt-2">CID: {profileImageCID}</p>}
+              {profileImageCID && (
+                <p className="text-[--fo-success] text-sm mt-2 flex items-center gap-1">
+                  <CheckCircleIcon className="w-4 h-4" />
+                  Profile image uploaded
+                </p>
+              )}
             </div>
 
             {/* Banner Image Upload */}
@@ -282,10 +362,19 @@ const CreateProfilePage: NextPage = () => {
                 onUpload={cid => setBannerImageCID(cid)}
                 placeholder="Upload your profile banner"
               />
-              {bannerImageCID && <p className="text-[--fo-text-muted] text-sm mt-2">CID: {bannerImageCID}</p>}
+              {bannerImageCID && (
+                <p className="text-[--fo-success] text-sm mt-2 flex items-center gap-1">
+                  <CheckCircleIcon className="w-4 h-4" />
+                  Banner image uploaded
+                </p>
+              )}
             </div>
 
-            <button onClick={() => validateStep1() && setStep(2)} className="fo-btn-primary w-full">
+            <button
+              onClick={() => validateStep1() && setStep(2)}
+              disabled={isUsernameTaken || isCheckingUsername}
+              className="fo-btn-primary w-full disabled:opacity-50"
+            >
               Continue
             </button>
           </div>
@@ -329,7 +418,7 @@ const CreateProfilePage: NextPage = () => {
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Price (MNT)</label>
+                      <label className="block text-sm font-medium mb-1">Price (MNT/month)</label>
                       <input
                         type="number"
                         step="0.001"
@@ -389,7 +478,7 @@ const CreateProfilePage: NextPage = () => {
             <h2 className="text-xl font-bold mb-6">Review Your Profile</h2>
 
             {/* Preview Card */}
-            <div className="fo-card-elevated mb-6">
+            <div className="fo-card-elevated mb-6 overflow-hidden">
               <div className="h-24 bg-gradient-to-r from-[--fo-primary] to-[--fo-accent]" />
               <div className="p-4 pt-0 relative">
                 <div className="-mt-10 mb-3">
@@ -417,24 +506,40 @@ const CreateProfilePage: NextPage = () => {
                       <span className="font-medium">{tier.name}</span>
                       <span className="text-[--fo-text-muted] text-sm ml-2">({tier.description})</span>
                     </div>
-                    <span className="font-bold text-[--fo-primary]">{tier.price} MNT</span>
+                    <span className="font-bold text-[--fo-primary]">{tier.price} MNT/mo</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {errors.submit && (
+            {/* Transaction Info */}
+            <div className="bg-info/10 border border-info/30 rounded-lg p-4 mb-6">
+              <p className="text-sm text-info">
+                <strong>Note:</strong> Creating your profile will require {1 + tiers.length} blockchain transaction
+                {1 + tiers.length > 1 ? "s" : ""} (1 for registration + {tiers.length} for tier
+                {tiers.length > 1 ? "s" : ""}). Please confirm each transaction in your wallet.
+              </p>
+            </div>
+
+            {(errors.submit || registerError) && (
               <div className="p-4 bg-[--fo-error]/10 border border-[--fo-error] rounded-lg mb-6 text-[--fo-error]">
-                {errors.submit}
+                {errors.submit || registerError?.message}
               </div>
             )}
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(2)} className="fo-btn-secondary flex-1">
+              <button onClick={() => setStep(2)} disabled={isPending} className="fo-btn-secondary flex-1">
                 Back
               </button>
-              <button onClick={handleSubmit} disabled={isRegistering} className="fo-btn-primary flex-1">
-                {isRegistering ? "Creating Profile..." : "Create Profile"}
+              <button onClick={handleSubmit} disabled={isPending} className="fo-btn-primary flex-1">
+                {isPending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="loading loading-spinner loading-sm"></span>
+                    {isRegistering ? "Registering..." : "Creating Tiers..."}
+                  </span>
+                ) : (
+                  "Create Profile"
+                )}
               </button>
             </div>
 

@@ -60,7 +60,7 @@ contract ContentPostTest is Test {
 
         // Subscribe subscriber1 to creator1's basic tier
         vm.prank(subscriber1);
-        creatorProfile.subscribe{value: TIER_PRICE}(creator1, 0);
+        creatorProfile.subscribe{ value: TIER_PRICE }(creator1, 0);
     }
 
     // ============ Post Creation Tests ============
@@ -71,12 +71,7 @@ contract ContentPostTest is Test {
         emit PostCreated(0, creator1, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, block.timestamp);
 
         contentPost.createPost(
-            CONTENT_CID,
-            PREVIEW_CID,
-            CAPTION,
-            ContentPost.ContentType.IMAGE,
-            ContentPost.AccessLevel.PUBLIC,
-            0
+            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
 
         ContentPost.Post memory post = contentPost.getPost(0);
@@ -91,12 +86,7 @@ contract ContentPostTest is Test {
     function test_CreatePost_SubscribersOnly_Success() public {
         vm.prank(creator1);
         contentPost.createPost(
-            CONTENT_CID,
-            PREVIEW_CID,
-            CAPTION,
-            ContentPost.ContentType.VIDEO,
-            ContentPost.AccessLevel.SUBSCRIBERS,
-            0
+            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.VIDEO, ContentPost.AccessLevel.SUBSCRIBERS, 0
         );
 
         ContentPost.Post memory post = contentPost.getPost(0);
@@ -123,12 +113,7 @@ contract ContentPostTest is Test {
         vm.prank(subscriber1);
         vm.expectRevert(ContentPost.NotACreator.selector);
         contentPost.createPost(
-            CONTENT_CID,
-            PREVIEW_CID,
-            CAPTION,
-            ContentPost.ContentType.IMAGE,
-            ContentPost.AccessLevel.PUBLIC,
-            0
+            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
     }
 
@@ -136,12 +121,7 @@ contract ContentPostTest is Test {
         vm.prank(creator1);
         vm.expectRevert(ContentPost.InvalidContent.selector);
         contentPost.createPost(
-            "",
-            PREVIEW_CID,
-            CAPTION,
-            ContentPost.ContentType.IMAGE,
-            ContentPost.AccessLevel.PUBLIC,
-            0
+            "", PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
     }
 
@@ -193,7 +173,7 @@ contract ContentPostTest is Test {
 
         // Subscribe subscriber2 to premium tier
         vm.prank(subscriber2);
-        creatorProfile.subscribe{value: TIER_PRICE * 2}(creator1, 1);
+        creatorProfile.subscribe{ value: TIER_PRICE * 2 }(creator1, 1);
 
         // subscriber2 on premium tier should have access
         assertTrue(contentPost.canAccessPost(0, subscriber2));
@@ -441,12 +421,7 @@ contract ContentPostTest is Test {
         vm.prank(creator1);
         vm.expectRevert();
         contentPost.createPost(
-            CONTENT_CID,
-            PREVIEW_CID,
-            CAPTION,
-            ContentPost.ContentType.IMAGE,
-            ContentPost.AccessLevel.PUBLIC,
-            0
+            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
     }
 
@@ -455,24 +430,14 @@ contract ContentPostTest is Test {
     function _createPublicPost(address _creator) internal {
         vm.prank(_creator);
         contentPost.createPost(
-            CONTENT_CID,
-            PREVIEW_CID,
-            CAPTION,
-            ContentPost.ContentType.IMAGE,
-            ContentPost.AccessLevel.PUBLIC,
-            0
+            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
     }
 
     function _createSubscriberPost(address _creator) internal {
         vm.prank(_creator);
         contentPost.createPost(
-            CONTENT_CID,
-            PREVIEW_CID,
-            CAPTION,
-            ContentPost.ContentType.IMAGE,
-            ContentPost.AccessLevel.SUBSCRIBERS,
-            0
+            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.SUBSCRIBERS, 0
         );
     }
 }

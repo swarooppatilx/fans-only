@@ -7,9 +7,9 @@
 @theme {
   --shadow-center: 0 0 12px -2px rgb(0 0 0 / 0.05);
   --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  
+
   /* FansOnly Design System */
-  --fo-primary: #00AFF0;
+  --fo-primary: #00aff0;
   --fo-primary-hover: #0095cc;
   --fo-primary-light: rgba(0, 175, 240, 0.1);
   --fo-secondary: #1a1a2e;
@@ -17,25 +17,25 @@
   --fo-success: #10b981;
   --fo-warning: #f59e0b;
   --fo-error: #ef4444;
-  
+
   /* Dark theme colors */
   --fo-bg-primary: #0a0a0f;
   --fo-bg-secondary: #121218;
   --fo-bg-card: #1a1a24;
   --fo-bg-elevated: #222230;
-  
+
   /* Text colors */
   --fo-text-primary: #ffffff;
   --fo-text-secondary: #a1a1aa;
   --fo-text-muted: #71717a;
-  
+
   /* Border colors */
   --fo-border: #2a2a3a;
   --fo-border-light: #3a3a4a;
-  
+
   /* Gradients */
-  --fo-gradient-primary: linear-gradient(135deg, #00AFF0 0%, #7c3aed 100%);
-  --fo-gradient-card: linear-gradient(180deg, rgba(0,175,240,0.05) 0%, transparent 100%);
+  --fo-gradient-primary: linear-gradient(135deg, #00aff0 0%, #7c3aed 100%);
+  --fo-gradient-card: linear-gradient(180deg, rgba(0, 175, 240, 0.05) 0%, transparent 100%);
 }
 
 @plugin "daisyui" {
@@ -47,11 +47,11 @@
 @plugin "daisyui/theme" {
   name: "light";
 
-  --color-primary: #00AFF0;
+  --color-primary: #00aff0;
   --color-primary-content: #ffffff;
   --color-secondary: #7c3aed;
   --color-secondary-content: #ffffff;
-  --color-accent: #00AFF0;
+  --color-accent: #00aff0;
   --color-accent-content: #ffffff;
   --color-neutral: #1a1a2e;
   --color-neutral-content: #ffffff;
@@ -59,7 +59,7 @@
   --color-base-200: #f8fafc;
   --color-base-300: #e2e8f0;
   --color-base-content: #1a1a2e;
-  --color-info: #00AFF0;
+  --color-info: #00aff0;
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
@@ -72,11 +72,11 @@
 @plugin "daisyui/theme" {
   name: "dark";
 
-  --color-primary: #00AFF0;
+  --color-primary: #00aff0;
   --color-primary-content: #ffffff;
   --color-secondary: #7c3aed;
   --color-secondary-content: #ffffff;
-  --color-accent: #00AFF0;
+  --color-accent: #00aff0;
   --color-accent-content: #ffffff;
   --color-neutral: #ffffff;
   --color-neutral-content: #1a1a2e;
@@ -84,7 +84,7 @@
   --color-base-200: #121218;
   --color-base-300: #0a0a0f;
   --color-base-content: #ffffff;
-  --color-info: #00AFF0;
+  --color-info: #00aff0;
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;

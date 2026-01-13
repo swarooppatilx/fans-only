@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import {
+  CheckCircleIcon,
   DocumentTextIcon,
   GlobeAltIcon,
   LockClosedIcon,
@@ -15,37 +16,41 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { FileUpload } from "~~/components/FileUpload";
-import { useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import { AccessLevel, ContentType, useCreatePost } from "~~/hooks/fansonly/useContentPost";
+import { useCreator, useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfile";
 
-type ContentType = "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "MIXED";
-type AccessLevel = "PUBLIC" | "SUBSCRIBERS" | "TIER_GATED";
+type ContentTypeOption = "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "MIXED";
+type AccessLevelOption = "PUBLIC" | "SUBSCRIBERS" | "TIER_GATED";
 
 const contentTypeOptions = [
-  { value: "TEXT" as ContentType, label: "Text", icon: DocumentTextIcon },
-  { value: "IMAGE" as ContentType, label: "Image", icon: PhotoIcon },
-  { value: "VIDEO" as ContentType, label: "Video", icon: VideoCameraIcon },
-  { value: "AUDIO" as ContentType, label: "Audio", icon: MusicalNoteIcon },
-  { value: "MIXED" as ContentType, label: "Mixed", icon: PhotoIcon },
+  { value: "TEXT" as ContentTypeOption, label: "Text", icon: DocumentTextIcon, enumValue: ContentType.TEXT },
+  { value: "IMAGE" as ContentTypeOption, label: "Image", icon: PhotoIcon, enumValue: ContentType.IMAGE },
+  { value: "VIDEO" as ContentTypeOption, label: "Video", icon: VideoCameraIcon, enumValue: ContentType.VIDEO },
+  { value: "AUDIO" as ContentTypeOption, label: "Audio", icon: MusicalNoteIcon, enumValue: ContentType.AUDIO },
+  { value: "MIXED" as ContentTypeOption, label: "Mixed", icon: PhotoIcon, enumValue: ContentType.MIXED },
 ];
 
 const accessLevelOptions = [
   {
-    value: "PUBLIC" as AccessLevel,
+    value: "PUBLIC" as AccessLevelOption,
     label: "Public",
     description: "Anyone can view this post",
     icon: GlobeAltIcon,
+    enumValue: AccessLevel.PUBLIC,
   },
   {
-    value: "SUBSCRIBERS" as AccessLevel,
+    value: "SUBSCRIBERS" as AccessLevelOption,
     label: "All Subscribers",
     description: "Any subscriber can view",
     icon: UserGroupIcon,
+    enumValue: AccessLevel.SUBSCRIBERS,
   },
   {
-    value: "TIER_GATED" as AccessLevel,
+    value: "TIER_GATED" as AccessLevelOption,
     label: "Tier Gated",
     description: "Specific tier required",
     icon: LockClosedIcon,
+    enumValue: AccessLevel.TIER_GATED,
   },
 ];
 
@@ -56,81 +61,77 @@ const CreatePostPage: NextPage = () => {
   // Form state
   const [caption, setCaption] = useState("");
   const [contentCID, setContentCID] = useState("");
-  const [contentType, setContentType] = useState<ContentType>("TEXT");
-  const [accessLevel, setAccessLevel] = useState<AccessLevel>("PUBLIC");
+  const [previewCID, setPreviewCID] = useState("");
+  const [contentType, setContentType] = useState<ContentTypeOption>("TEXT");
+  const [accessLevel, setAccessLevel] = useState<AccessLevelOption>("PUBLIC");
   const [selectedTier, setSelectedTier] = useState<number>(0);
   const [isPreview, setIsPreview] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Contract interactions
-  const { writeContractAsync: createPost, isPending: isCreating } = useScaffoldWriteContract("ContentPost");
+  // Custom hooks for contract interactions
+  const { createPost, isPending: isCreating, error: createError } = useCreatePost();
 
-  // Get creator's profile and tiers for tier-gated posts
-  const { data: creatorProfile } = useScaffoldReadContract({
-    contractName: "CreatorProfile",
-    functionName: "getCreator",
-    args: [connectedAddress],
-  });
+  // Get creator's profile and tiers
+  const { isCreator, creator: creatorProfile, isLoading: isLoadingCreator } = useCurrentCreator();
+  const { tiers: creatorTiers } = useCreator(connectedAddress);
 
-  const { data: creatorTiers } = useScaffoldReadContract({
-    contractName: "CreatorProfile",
-    functionName: "getCreatorTiers",
-    args: [connectedAddress],
-  });
-
-  const isCreator = creatorProfile?.isActive;
-
-  // Map content type to contract enum value
-  const getContentTypeValue = (type: ContentType): number => {
-    const types: Record<ContentType, number> = {
-      TEXT: 0,
-      IMAGE: 1,
-      VIDEO: 2,
-      AUDIO: 3,
-      MIXED: 4,
-    };
-    return types[type];
+  // Get enum values from options
+  const getContentTypeEnum = (type: ContentTypeOption): ContentType => {
+    const option = contentTypeOptions.find(o => o.value === type);
+    return option?.enumValue ?? ContentType.TEXT;
   };
 
-  // Map access level to contract enum value
-  const getAccessLevelValue = (level: AccessLevel): number => {
-    const levels: Record<AccessLevel, number> = {
-      PUBLIC: 0,
-      SUBSCRIBERS: 1,
-      TIER_GATED: 2,
-    };
-    return levels[level];
+  const getAccessLevelEnum = (level: AccessLevelOption): AccessLevel => {
+    const option = accessLevelOptions.find(o => o.value === level);
+    return option?.enumValue ?? AccessLevel.PUBLIC;
   };
 
   const handleSubmit = async () => {
     if (!isConnected || !connectedAddress) {
-      alert("Please connect your wallet");
+      setErrorMessage("Please connect your wallet");
       return;
     }
 
     if (!caption.trim()) {
-      alert("Please add a caption");
+      setErrorMessage("Please add a caption");
       return;
     }
 
-    try {
-      await createPost({
-        functionName: "createPost",
-        args: [
-          contentCID,
-          "", // previewCID - optional
-          caption,
-          getContentTypeValue(contentType),
-          getAccessLevelValue(accessLevel),
-          BigInt(selectedTier),
-        ],
-      });
+    setErrorMessage("");
 
-      router.push(`/creator/${creatorProfile?.username}`);
+    try {
+      await createPost(
+        contentCID,
+        previewCID,
+        caption,
+        getContentTypeEnum(contentType),
+        getAccessLevelEnum(accessLevel),
+        BigInt(selectedTier),
+      );
+
+      setIsSuccess(true);
+      // Wait a moment for user to see success, then redirect
+      setTimeout(() => {
+        router.push(`/creator/${creatorProfile?.username}`);
+      }, 2000);
     } catch (error) {
       console.error("Failed to create post:", error);
-      alert("Failed to create post. Please try again.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to create post. Please try again.");
     }
   };
+
+  // Loading creator status
+  if (isLoadingCreator) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg text-[--fo-primary]"></div>
+          <p className="mt-4 text-[--fo-text-muted]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Not connected
   if (!isConnected) {
@@ -156,6 +157,23 @@ const CreatePostPage: NextPage = () => {
           <button onClick={() => router.push("/profile/create")} className="fo-btn-primary">
             Create Profile
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Success state
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="fo-card p-8 text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[--fo-success]/20 flex items-center justify-center">
+            <CheckCircleIcon className="w-10 h-10 text-[--fo-success]" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Post Published!</h2>
+          <p className="text-[--fo-text-secondary] mb-4">Your post is now live on your profile.</p>
+          <div className="loading loading-spinner loading-sm text-[--fo-primary]"></div>
+          <p className="text-sm text-[--fo-text-muted] mt-2">Redirecting to your profile...</p>
         </div>
       </div>
     );
@@ -221,6 +239,33 @@ const CreatePostPage: NextPage = () => {
               className="fo-input"
             />
           </div>
+
+          {/* Preview CID for locked content */}
+          {accessLevel !== "PUBLIC" && contentType !== "TEXT" && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">Preview Image (optional)</label>
+              <p className="text-sm text-[--fo-text-muted] mb-2">
+                This image will be shown blurred to non-subscribers as a teaser.
+              </p>
+              <FileUpload
+                label=""
+                accept="image/*"
+                maxSizeMB={10}
+                onUpload={cid => setPreviewCID(cid)}
+                placeholder="Upload a preview/thumbnail image"
+              />
+              {previewCID && (
+                <input
+                  type="text"
+                  value={previewCID}
+                  onChange={e => setPreviewCID(e.target.value)}
+                  placeholder="Preview CID"
+                  className="fo-input mt-2"
+                  readOnly
+                />
+              )}
+            </div>
+          )}
 
           {/* Content Type */}
           <div className="mb-6">
@@ -349,9 +394,23 @@ const CreatePostPage: NextPage = () => {
             </div>
           )}
 
+          {/* Error Message */}
+          {(errorMessage || createError) && (
+            <div className="mb-4 p-4 bg-[--fo-error]/10 border border-[--fo-error] rounded-lg text-[--fo-error] text-sm">
+              {errorMessage || createError?.message || "An error occurred"}
+            </div>
+          )}
+
           {/* Submit Button */}
           <button onClick={handleSubmit} disabled={isCreating || !caption.trim()} className="fo-btn-primary w-full">
-            {isCreating ? "Publishing..." : "Publish Post"}
+            {isCreating ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="loading loading-spinner loading-sm"></span>
+                Publishing...
+              </span>
+            ) : (
+              "Publish Post"
+            )}
           </button>
         </div>
       </div>

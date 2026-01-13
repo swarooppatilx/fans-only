@@ -62,18 +62,9 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
     event TierUpdated(address indexed creator, uint256 tierId, string name, uint256 price);
     event TierDeactivated(address indexed creator, uint256 tierId);
     event Subscribed(
-        address indexed subscriber,
-        address indexed creator,
-        uint256 tierId,
-        uint256 price,
-        uint256 endTime
+        address indexed subscriber, address indexed creator, uint256 tierId, uint256 price, uint256 endTime
     );
-    event SubscriptionRenewed(
-        address indexed subscriber,
-        address indexed creator,
-        uint256 tierId,
-        uint256 newEndTime
-    );
+    event SubscriptionRenewed(address indexed subscriber, address indexed creator, uint256 tierId, uint256 newEndTime);
     event SubscriptionCancelled(address indexed subscriber, address indexed creator);
     event CreatorVerified(address indexed creator);
     event PlatformWalletUpdated(address indexed oldWallet, address indexed newWallet);
@@ -180,15 +171,15 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
      * @param _description Tier description
      * @param _price Tier price in wei
      */
-    function createTier(
-        string calldata _name,
-        string calldata _description,
-        uint256 _price
-    ) external onlyCreator whenNotPaused {
+    function createTier(string calldata _name, string calldata _description, uint256 _price)
+        external
+        onlyCreator
+        whenNotPaused
+    {
         if (creatorTiers[msg.sender].length >= MAX_TIERS) revert MaxTiersReached();
 
         creatorTiers[msg.sender].push(
-            SubscriptionTier({name: _name, description: _description, price: _price, isActive: true})
+            SubscriptionTier({ name: _name, description: _description, price: _price, isActive: true })
         );
 
         uint256 tierId = creatorTiers[msg.sender].length - 1;
@@ -202,12 +193,11 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
      * @param _description New tier description
      * @param _price New tier price
      */
-    function updateTier(
-        uint256 _tierId,
-        string calldata _name,
-        string calldata _description,
-        uint256 _price
-    ) external onlyCreator whenNotPaused {
+    function updateTier(uint256 _tierId, string calldata _name, string calldata _description, uint256 _price)
+        external
+        onlyCreator
+        whenNotPaused
+    {
         if (_tierId >= creatorTiers[msg.sender].length) revert InvalidTier();
 
         SubscriptionTier storage tier = creatorTiers[msg.sender][_tierId];
@@ -236,7 +226,13 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
      * @param _creator Creator address to subscribe to
      * @param _tierId Tier ID to subscribe to
      */
-    function subscribe(address _creator, uint256 _tierId) external payable nonReentrant whenNotPaused validCreator(_creator) {
+    function subscribe(address _creator, uint256 _tierId)
+        external
+        payable
+        nonReentrant
+        whenNotPaused
+        validCreator(_creator)
+    {
         if (_tierId >= creatorTiers[_creator].length) revert InvalidTier();
 
         SubscriptionTier storage tier = creatorTiers[_creator][_tierId];
@@ -261,10 +257,10 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
         creators[_creator].totalEarnings += creatorAmount;
 
         // Transfer funds
-        (bool successCreator,) = payable(_creator).call{value: creatorAmount}("");
+        (bool successCreator,) = payable(_creator).call{ value: creatorAmount }("");
         if (!successCreator) revert TransferFailed();
 
-        (bool successPlatform,) = payable(platformWallet).call{value: platformFee}("");
+        (bool successPlatform,) = payable(platformWallet).call{ value: platformFee }("");
         if (!successPlatform) revert TransferFailed();
 
         emit Subscribed(msg.sender, _creator, _tierId, msg.value, sub.endTime);
@@ -293,10 +289,10 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
         creators[_creator].totalEarnings += creatorAmount;
 
         // Transfer funds
-        (bool successCreator,) = payable(_creator).call{value: creatorAmount}("");
+        (bool successCreator,) = payable(_creator).call{ value: creatorAmount }("");
         if (!successCreator) revert TransferFailed();
 
-        (bool successPlatform,) = payable(platformWallet).call{value: platformFee}("");
+        (bool successPlatform,) = payable(platformWallet).call{ value: platformFee }("");
         if (!successPlatform) revert TransferFailed();
 
         emit SubscriptionRenewed(msg.sender, _creator, sub.tierId, sub.endTime);

@@ -148,7 +148,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 1,
+      deployedOnBlock: 5,
     },
     CreatorProfile: {
       address: "0xa15bb66138824a1c7167f5e85b957d04dd34e468",
@@ -1283,7 +1283,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 2,
+      deployedOnBlock: 6,
     },
     ContentPost: {
       address: "0xe1aa25618fa0c7a1cfdab5d6b456af611873b629",

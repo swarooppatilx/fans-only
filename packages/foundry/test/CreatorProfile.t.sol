@@ -27,11 +27,7 @@ contract CreatorProfileTest is Test {
     event CreatorRegistered(address indexed creator, string username, uint256 timestamp);
     event TierCreated(address indexed creator, uint256 tierId, string name, uint256 price);
     event Subscribed(
-        address indexed subscriber,
-        address indexed creator,
-        uint256 tierId,
-        uint256 price,
-        uint256 endTime
+        address indexed subscriber, address indexed creator, uint256 tierId, uint256 price, uint256 endTime
     );
 
     function setUp() public {
@@ -171,7 +167,7 @@ contract CreatorProfileTest is Test {
         uint256 platformBalanceBefore = platformWallet.balance;
 
         vm.prank(subscriber1);
-        creatorProfile.subscribe{value: TIER_PRICE}(creator1, 0);
+        creatorProfile.subscribe{ value: TIER_PRICE }(creator1, 0);
 
         // Check subscription
         assertTrue(creatorProfile.isSubscribed(creator1, subscriber1));
@@ -199,7 +195,7 @@ contract CreatorProfileTest is Test {
 
         vm.prank(subscriber1);
         vm.expectRevert(CreatorProfile.InsufficientPayment.selector);
-        creatorProfile.subscribe{value: TIER_PRICE - 1}(creator1, 0);
+        creatorProfile.subscribe{ value: TIER_PRICE - 1 }(creator1, 0);
     }
 
     function test_Subscribe_RevertsIfAlreadySubscribed() public {
@@ -207,10 +203,10 @@ contract CreatorProfileTest is Test {
         _createTier(creator1);
 
         vm.startPrank(subscriber1);
-        creatorProfile.subscribe{value: TIER_PRICE}(creator1, 0);
+        creatorProfile.subscribe{ value: TIER_PRICE }(creator1, 0);
 
         vm.expectRevert(CreatorProfile.AlreadySubscribed.selector);
-        creatorProfile.subscribe{value: TIER_PRICE}(creator1, 0);
+        creatorProfile.subscribe{ value: TIER_PRICE }(creator1, 0);
         vm.stopPrank();
     }
 
@@ -223,13 +219,13 @@ contract CreatorProfileTest is Test {
 
         vm.prank(subscriber1);
         vm.expectRevert(CreatorProfile.TierNotActive.selector);
-        creatorProfile.subscribe{value: TIER_PRICE}(creator1, 0);
+        creatorProfile.subscribe{ value: TIER_PRICE }(creator1, 0);
     }
 
     function test_Subscribe_RevertsIfInvalidCreator() public {
         vm.prank(subscriber1);
         vm.expectRevert(CreatorProfile.NotACreator.selector);
-        creatorProfile.subscribe{value: TIER_PRICE}(creator1, 0);
+        creatorProfile.subscribe{ value: TIER_PRICE }(creator1, 0);
     }
 
     // ============ Renewal Tests ============
@@ -239,7 +235,7 @@ contract CreatorProfileTest is Test {
         _createTier(creator1);
 
         vm.prank(subscriber1);
-        creatorProfile.subscribe{value: TIER_PRICE}(creator1, 0);
+        creatorProfile.subscribe{ value: TIER_PRICE }(creator1, 0);
 
         // Fast forward 25 days
         vm.warp(block.timestamp + 25 days);
@@ -247,7 +243,7 @@ contract CreatorProfileTest is Test {
         uint256 originalEndTime = creatorProfile.getSubscription(creator1, subscriber1).endTime;
 
         vm.prank(subscriber1);
-        creatorProfile.renewSubscription{value: TIER_PRICE}(creator1);
+        creatorProfile.renewSubscription{ value: TIER_PRICE }(creator1);
 
         CreatorProfile.Subscription memory sub = creatorProfile.getSubscription(creator1, subscriber1);
         assertEq(sub.endTime, originalEndTime + 30 days);
@@ -259,7 +255,7 @@ contract CreatorProfileTest is Test {
 
         vm.prank(subscriber1);
         vm.expectRevert(CreatorProfile.NotSubscribed.selector);
-        creatorProfile.renewSubscription{value: TIER_PRICE}(creator1);
+        creatorProfile.renewSubscription{ value: TIER_PRICE }(creator1);
     }
 
     // ============ View Function Tests ============
@@ -270,11 +266,7 @@ contract CreatorProfileTest is Test {
             address creator = makeAddr(string.concat("creator", vm.toString(i)));
             vm.prank(creator);
             creatorProfile.registerCreator(
-                string.concat("user", vm.toString(i)),
-                DISPLAY_NAME,
-                BIO,
-                PROFILE_CID,
-                BANNER_CID
+                string.concat("user", vm.toString(i)), DISPLAY_NAME, BIO, PROFILE_CID, BANNER_CID
             );
         }
 

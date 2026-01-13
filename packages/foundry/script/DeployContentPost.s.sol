@@ -21,7 +21,7 @@ contract DeployContentPost is ScaffoldETHDeploy {
             // Try to read from latest deployment
             string memory root = vm.projectRoot();
             string memory path = string.concat(root, "/broadcast/DeployCreatorProfile.s.sol/31337/run-latest.json");
-            
+
             try vm.readFile(path) returns (string memory json) {
                 // Parse the deployment to get CreatorProfile address
                 // For now, we'll require the env var

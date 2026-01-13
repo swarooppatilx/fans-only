@@ -26,21 +26,21 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     }
 
     enum AccessLevel {
-        PUBLIC,      // Anyone can view
+        PUBLIC, // Anyone can view
         SUBSCRIBERS, // Any subscriber can view
-        TIER_GATED   // Specific tier required
+        TIER_GATED // Specific tier required
     }
 
     // ============ Structs ============
     struct Post {
         uint256 id;
         address creator;
-        string contentCID;        // IPFS CID for encrypted content
-        string previewCID;        // IPFS CID for preview/thumbnail (public)
+        string contentCID; // IPFS CID for encrypted content
+        string previewCID; // IPFS CID for preview/thumbnail (public)
         string caption;
         ContentType contentType;
         AccessLevel accessLevel;
-        uint256 requiredTierId;   // Only used if accessLevel is TIER_GATED
+        uint256 requiredTierId; // Only used if accessLevel is TIER_GATED
         uint256 createdAt;
         uint256 likesCount;
         uint256 commentsCount;
@@ -63,11 +63,11 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     uint256 public nextCommentId;
 
     mapping(uint256 => Post) public posts;
-    mapping(address => uint256[]) public creatorPosts;      // creator => postIds
-    mapping(uint256 => uint256[]) public postComments;      // postId => commentIds
+    mapping(address => uint256[]) public creatorPosts; // creator => postIds
+    mapping(uint256 => uint256[]) public postComments; // postId => commentIds
     mapping(uint256 => Comment) public comments;
-    mapping(uint256 => mapping(address => bool)) public postLikes;  // postId => user => liked
-    mapping(address => uint256[]) public userLikedPosts;    // user => likedPostIds
+    mapping(uint256 => mapping(address => bool)) public postLikes; // postId => user => liked
+    mapping(address => uint256[]) public userLikedPosts; // user => likedPostIds
 
     // ============ Events ============
     event PostCreated(
@@ -172,11 +172,12 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _caption New caption
      * @param _previewCID New preview CID
      */
-    function updatePost(
-        uint256 _postId,
-        string calldata _caption,
-        string calldata _previewCID
-    ) external postExists(_postId) onlyPostOwner(_postId) whenNotPaused {
+    function updatePost(uint256 _postId, string calldata _caption, string calldata _previewCID)
+        external
+        postExists(_postId)
+        onlyPostOwner(_postId)
+        whenNotPaused
+    {
         Post storage post = posts[_postId];
         post.caption = _caption;
         post.previewCID = _previewCID;
@@ -240,10 +241,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _postId Post ID to comment on
      * @param _content Comment content
      */
-    function addComment(
-        uint256 _postId,
-        string calldata _content
-    ) external postExists(_postId) whenNotPaused {
+    function addComment(uint256 _postId, string calldata _content) external postExists(_postId) whenNotPaused {
         if (bytes(_content).length == 0) revert InvalidContent();
         if (!canAccessPost(_postId, msg.sender)) revert AccessDenied();
 
@@ -357,11 +355,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _limit Number of posts to return
      * @return Array of Post structs
      */
-    function getCreatorPosts(
-        address _creator,
-        uint256 _offset,
-        uint256 _limit
-    ) external view returns (Post[] memory) {
+    function getCreatorPosts(address _creator, uint256 _offset, uint256 _limit) external view returns (Post[] memory) {
         uint256[] storage postIds = creatorPosts[_creator];
         uint256 total = postIds.length;
 
@@ -394,11 +388,12 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _limit Number of comments to return
      * @return Array of Comment structs
      */
-    function getPostComments(
-        uint256 _postId,
-        uint256 _offset,
-        uint256 _limit
-    ) external view postExists(_postId) returns (Comment[] memory) {
+    function getPostComments(uint256 _postId, uint256 _offset, uint256 _limit)
+        external
+        view
+        postExists(_postId)
+        returns (Comment[] memory)
+    {
         uint256[] storage commentIds = postComments[_postId];
         uint256 total = commentIds.length;
 
