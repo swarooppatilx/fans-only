@@ -18,8 +18,9 @@ import {
   ShareIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import { PostComments } from "~~/components/fansonly/PostComments";
 import { SubscriptionTier, getIpfsUrl, useCreatorByUsername, useSubscribe, useSubscription } from "~~/hooks/fansonly";
-import { AccessLevel, Post, useCreatorPosts } from "~~/hooks/fansonly";
+import { AccessLevel, Post, useCreatorPosts, useLikePost, usePost, useUnlikePost } from "~~/hooks/fansonly";
 
 // Mock creator data - used when no on-chain data exists
 const mockCreator = {
@@ -146,7 +147,23 @@ const PostCard = ({
   isSubscribed: boolean;
   subscribedTierId: bigint;
 }) => {
-  const [liked, setLiked] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const { hasLiked, refetch: refetchPost } = usePost(post.id);
+  const { likePost, isPending: isLiking } = useLikePost();
+  const { unlikePost, isPending: isUnliking } = useUnlikePost();
+
+  const handleLikeToggle = async () => {
+    try {
+      if (hasLiked) {
+        await unlikePost(post.id);
+      } else {
+        await likePost(post.id);
+      }
+      refetchPost();
+    } catch (error) {
+      console.error("Failed to toggle like:", error);
+    }
+  };
 
   // Check if user can view this content
   const canView =
@@ -234,11 +251,14 @@ const PostCard = ({
 
       {/* Actions */}
       <div className="fo-post-actions">
-        <button className="fo-post-action" onClick={() => setLiked(!liked)}>
-          {liked ? <HeartSolidIcon className="w-5 h-5 text-red-500" /> : <HeartIcon className="w-5 h-5" />}
-          <span>{liked ? Number(post.likesCount) + 1 : Number(post.likesCount)}</span>
+        <button className="fo-post-action" onClick={handleLikeToggle} disabled={isLiking || isUnliking}>
+          {hasLiked ? <HeartSolidIcon className="w-5 h-5 text-red-500" /> : <HeartIcon className="w-5 h-5" />}
+          <span>{Number(post.likesCount)}</span>
         </button>
-        <button className="fo-post-action">
+        <button
+          className={`fo-post-action ${showComments ? "text-fo-primary" : ""}`}
+          onClick={() => setShowComments(!showComments)}
+        >
           <ChatBubbleLeftIcon className="w-5 h-5" />
           <span>{Number(post.commentsCount)}</span>
         </button>
@@ -246,6 +266,9 @@ const PostCard = ({
           <ShareIcon className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Comments Section */}
+      <PostComments postId={post.id} isExpanded={showComments} />
     </div>
   );
 };
