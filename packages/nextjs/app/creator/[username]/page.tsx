@@ -22,87 +22,6 @@ import { PostComments } from "~~/components/fansonly/PostComments";
 import { SubscriptionTier, getIpfsUrl, useCreatorByUsername, useSubscribe, useSubscription } from "~~/hooks/fansonly";
 import { AccessLevel, Post, useCreatorPosts, useLikePost, usePost, useUnlikePost } from "~~/hooks/fansonly";
 
-// Mock creator data - used when no on-chain data exists
-const mockCreator = {
-  address: "0x1234567890123456789012345678901234567890" as `0x${string}`,
-  username: "cryptoartist",
-  displayName: "Crypto Artist",
-  bio: "Digital artist creating NFT masterpieces. Exclusive behind-the-scenes content, early access to drops, and personalized artwork for top-tier subscribers. Join my creative journey! 🎨",
-  profileImageCID: "",
-  bannerImageCID: "",
-  isVerified: true,
-  isActive: true,
-  totalSubscribers: BigInt(156),
-  totalEarnings: BigInt(0),
-  createdAt: BigInt(1718496000),
-  tiers: [
-    {
-      name: "Fan",
-      price: BigInt(10000000000000000),
-      description: "Access to public posts and community chat",
-      isActive: true,
-    },
-    {
-      name: "Supporter",
-      price: BigInt(50000000000000000),
-      description: "Exclusive content, early access, and monthly wallpapers",
-      isActive: true,
-    },
-    {
-      name: "VIP",
-      price: BigInt(150000000000000000),
-      description: "All previous perks + personalized artwork requests",
-      isActive: true,
-    },
-  ] as SubscriptionTier[],
-};
-
-// Mock posts for demo
-const mockPosts: Post[] = [
-  {
-    id: BigInt(1),
-    creator: mockCreator.address,
-    contentCID: "",
-    previewCID: "",
-    caption: "Just finished this new piece! What do you think? 🔥",
-    contentType: 1,
-    accessLevel: AccessLevel.PUBLIC,
-    requiredTierId: BigInt(0),
-    likesCount: BigInt(42),
-    commentsCount: BigInt(8),
-    createdAt: BigInt(Math.floor(Date.now() / 1000) - 86400),
-    isActive: true,
-  },
-  {
-    id: BigInt(2),
-    creator: mockCreator.address,
-    contentCID: "",
-    previewCID: "",
-    caption: "Behind the scenes of my latest collection - exclusive for supporters! 🎨",
-    contentType: 1,
-    accessLevel: AccessLevel.TIER_GATED,
-    requiredTierId: BigInt(1),
-    likesCount: BigInt(28),
-    commentsCount: BigInt(5),
-    createdAt: BigInt(Math.floor(Date.now() / 1000) - 172800),
-    isActive: true,
-  },
-  {
-    id: BigInt(3),
-    creator: mockCreator.address,
-    contentCID: "",
-    previewCID: "",
-    caption: "New tutorial dropping this week - how I create my signature style ✨",
-    contentType: 2,
-    accessLevel: AccessLevel.SUBSCRIBERS,
-    requiredTierId: BigInt(0),
-    likesCount: BigInt(67),
-    commentsCount: BigInt(12),
-    createdAt: BigInt(Math.floor(Date.now() / 1000) - 259200),
-    isActive: true,
-  },
-];
-
 const TierCard = ({
   tier,
   isCurrentTier,
@@ -220,34 +139,36 @@ const PostCard = ({
         <p className="text-base-content">{post.caption}</p>
       </div>
 
-      {/* Media */}
-      <div className="relative">
-        {canView ? (
-          <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
-            {post.contentCID ? (
-              <Image src={getIpfsUrl(post.contentCID)} alt="" fill className="object-cover" unoptimized />
-            ) : (
-              <PhotoIcon className="w-16 h-16 text-[--fo-text-muted]" />
-            )}
-          </div>
-        ) : (
-          <div className="fo-post-media relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-base-300 to-base-200" />
-            {post.previewCID && (
-              <Image src={getIpfsUrl(post.previewCID)} alt="" fill className="object-cover blur-xl" unoptimized />
-            )}
-            <div className="absolute inset-0 backdrop-blur-xl flex flex-col items-center justify-center gap-3 p-4">
-              <div className="w-16 h-16 rounded-full bg-base-100/80 flex items-center justify-center">
-                <LockClosedIcon className="w-8 h-8 text-[--fo-primary]" />
-              </div>
-              <p className="text-center font-medium">{getAccessLabel()}</p>
-              <a href="#tiers" className="fo-btn-subscribe text-xs">
-                Subscribe to Unlock
-              </a>
+      {/* Media - only show for non-text posts */}
+      {post.contentType !== 0 && (
+        <div className="relative">
+          {canView ? (
+            <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
+              {post.contentCID ? (
+                <Image src={getIpfsUrl(post.contentCID)} alt="" fill className="object-cover" unoptimized />
+              ) : (
+                <PhotoIcon className="w-16 h-16 text-[--fo-text-muted]" />
+              )}
             </div>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="fo-post-media relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-base-300 to-base-200" />
+              {post.previewCID && (
+                <Image src={getIpfsUrl(post.previewCID)} alt="" fill className="object-cover blur-xl" unoptimized />
+              )}
+              <div className="absolute inset-0 backdrop-blur-xl flex flex-col items-center justify-center gap-3 p-4">
+                <div className="w-16 h-16 rounded-full bg-base-100/80 flex items-center justify-center">
+                  <LockClosedIcon className="w-8 h-8 text-[--fo-primary]" />
+                </div>
+                <p className="text-center font-medium">{getAccessLabel()}</p>
+                <a href="#tiers" className="fo-btn-subscribe text-xs">
+                  Subscribe to Unlock
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="fo-post-actions">
@@ -286,34 +207,10 @@ const CreatorProfilePage: NextPage = () => {
   const { isSubscribed, subscription, isLoading: isLoadingSubscription } = useSubscription(creatorAddress);
 
   // Fetch creator posts
-  const { posts, isLoading: isLoadingPosts } = useCreatorPosts(creatorAddress, 0, 50);
+  const { posts, postCount, isLoading: isLoadingPosts } = useCreatorPosts(creatorAddress, 0, 50);
 
   // Subscribe hook
   const { subscribe, isPending: isSubscribing } = useSubscribe();
-
-  // Determine if we have on-chain data or should use mock
-  const hasOnChainData = !!creatorAddress && !!creator && creator.isActive;
-
-  // Use real data or fallback to mock
-  const displayCreator = hasOnChainData
-    ? {
-        address: creatorAddress as `0x${string}`,
-        username: creator!.username,
-        displayName: creator!.displayName,
-        bio: creator!.bio,
-        profileImageCID: creator!.profileImageCID,
-        bannerImageCID: creator!.bannerImageCID,
-        isVerified: creator!.isVerified,
-        isActive: creator!.isActive,
-        totalSubscribers: creator!.totalSubscribers,
-        totalEarnings: creator!.totalEarnings,
-        createdAt: creator!.createdAt,
-        tiers: tiers,
-      }
-    : { ...mockCreator, username };
-
-  const displayPosts = hasOnChainData && posts.length > 0 ? posts : mockPosts;
-  const displayTiers = displayCreator.tiers;
 
   const subscribedTierId = subscription?.tierId ?? BigInt(-1);
 
@@ -342,10 +239,10 @@ const CreatorProfilePage: NextPage = () => {
 
   const isLoading = isLoadingCreator || isLoadingSubscription;
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen">
-        {/* Loading skeleton */}
         <div className="h-48 md:h-64 bg-base-300 animate-pulse" />
         <div className="max-w-4xl mx-auto px-4">
           <div className="-mt-16 md:-mt-20 mb-4">
@@ -359,12 +256,35 @@ const CreatorProfilePage: NextPage = () => {
     );
   }
 
+  // Creator not found
+  if (!creator || !creator.isActive) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="fo-card p-8 text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-base-200 flex items-center justify-center">
+            <PhotoIcon className="w-10 h-10 text-[--fo-text-muted]" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Creator Not Found</h2>
+          <p className="text-[--fo-text-secondary] mb-6">
+            The creator @{username} doesn&apos;t exist or hasn&apos;t registered yet.
+          </p>
+          <Link href="/explore" className="fo-btn-primary inline-block">
+            Explore Creators
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const activeTiers = tiers.filter(t => t.isActive);
+  const activePosts = posts.filter(p => p.isActive);
+
   return (
     <div className="min-h-screen">
       {/* Banner */}
       <div className="h-48 md:h-64 bg-gradient-to-r from-[--fo-primary] to-[--fo-accent] relative overflow-hidden">
-        {displayCreator.bannerImageCID && (
-          <Image src={getIpfsUrl(displayCreator.bannerImageCID)} alt="" fill className="object-cover" unoptimized />
+        {creator.bannerImageCID && (
+          <Image src={getIpfsUrl(creator.bannerImageCID)} alt="" fill className="object-cover" unoptimized />
         )}
         <div className="absolute inset-0 bg-black/20" />
       </div>
@@ -375,10 +295,10 @@ const CreatorProfilePage: NextPage = () => {
           {/* Avatar */}
           <div className="-mt-16 md:-mt-20">
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-1 ring-4 ring-base-100 overflow-hidden">
-              {displayCreator.profileImageCID ? (
+              {creator.profileImageCID ? (
                 <Image
-                  src={getIpfsUrl(displayCreator.profileImageCID)}
-                  alt={displayCreator.displayName}
+                  src={getIpfsUrl(creator.profileImageCID)}
+                  alt={creator.displayName}
                   width={156}
                   height={156}
                   className="rounded-full object-cover"
@@ -386,7 +306,7 @@ const CreatorProfilePage: NextPage = () => {
                 />
               ) : (
                 <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-4xl md:text-5xl font-bold text-[--fo-primary]">
-                  {displayCreator.displayName.charAt(0)}
+                  {creator.displayName.charAt(0)}
                 </div>
               )}
             </div>
@@ -395,24 +315,19 @@ const CreatorProfilePage: NextPage = () => {
           {/* Info */}
           <div className="flex-1 pb-4">
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl md:text-3xl font-bold">{displayCreator.displayName}</h1>
-              {displayCreator.isVerified && <CheckBadgeIcon className="w-6 h-6 text-[--fo-primary]" />}
+              <h1 className="text-2xl md:text-3xl font-bold">{creator.displayName}</h1>
+              {creator.isVerified && <CheckBadgeIcon className="w-6 h-6 text-[--fo-primary]" />}
             </div>
-            <p className="text-[--fo-text-secondary] mb-2">@{displayCreator.username}</p>
-            <div className="flex items-center gap-1 text-sm text-[--fo-text-muted]">
-              <Address address={displayCreator.address} />
+            <p className="text-[--fo-text-muted] mb-2">@{creator.username}</p>
+            <div className="text-sm text-[--fo-text-secondary]">
+              <Address address={creatorAddress as `0x${string}`} />
             </div>
-            {!hasOnChainData && (
-              <span className="inline-block mt-2 px-2 py-1 bg-amber-500/10 text-amber-600 text-xs rounded">
-                Demo Profile
-              </span>
-            )}
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pb-4">
-            {connectedAddress === displayCreator.address ? (
-              <Link href="/settings" className="fo-btn-secondary">
+            {connectedAddress === creatorAddress ? (
+              <Link href="/profile/edit" className="fo-btn-secondary">
                 Edit Profile
               </Link>
             ) : isSubscribed ? (
@@ -428,49 +343,35 @@ const CreatorProfilePage: NextPage = () => {
 
       {/* Bio & Stats */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <p className="text-base-content mb-6">{displayCreator.bio}</p>
+        <p className="text-base-content mb-6">{creator.bio || "No bio yet."}</p>
 
-        <div className="flex gap-8 mb-6">
-          <div className="fo-stat">
-            <div className="fo-stat-value">{Number(displayCreator.totalSubscribers)}</div>
-            <div className="fo-stat-label">Subscribers</div>
+        <div className="flex flex-wrap gap-6 mb-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold">{Number(creator.totalSubscribers)}</div>
+            <div className="text-sm text-[--fo-text-muted]">Subscribers</div>
           </div>
-          <div className="fo-stat">
-            <div className="fo-stat-value">{displayPosts.length}</div>
-            <div className="fo-stat-label">Posts</div>
+          <div className="text-center">
+            <div className="text-2xl font-bold">{postCount}</div>
+            <div className="text-sm text-[--fo-text-muted]">Posts</div>
           </div>
-          <div className="fo-stat">
-            <div className="fo-stat-value">{displayTiers.filter(t => t.isActive).length}</div>
-            <div className="fo-stat-label">Tiers</div>
+          <div className="text-center">
+            <div className="text-2xl font-bold">{activeTiers.length}</div>
+            <div className="text-sm text-[--fo-text-muted]">Tiers</div>
           </div>
         </div>
 
-        {/* Subscription Tiers */}
-        {!isSubscribed && displayTiers.length > 0 && (
-          <div id="tiers" className="mb-8 scroll-mt-20">
-            <h2 className="text-xl font-bold mb-4">Subscription Tiers</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {displayTiers.map((tier, index) => (
-                <TierCard
-                  key={index}
-                  tier={tier}
-                  isCurrentTier={isSubscribed && Number(subscribedTierId) === index}
-                  onSubscribe={() => handleSubscribe(index, tier.price)}
-                  isLoading={isSubscribing}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="text-sm text-[--fo-text-muted]">Joined {formatJoinDate(creator.createdAt)}</div>
+      </div>
 
-        {/* Tabs */}
-        <div className="border-b border-[--fo-border] mb-6">
-          <div className="flex gap-8">
+      {/* Tabs */}
+      <div className="border-b border-[--fo-border] sticky top-16 z-10 bg-base-100">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex">
             {(["posts", "media", "about"] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-3 px-1 font-medium capitalize transition-colors border-b-2 -mb-px ${
+                className={`py-4 px-6 font-medium border-b-2 transition-colors capitalize ${
                   activeTab === tab
                     ? "text-[--fo-primary] border-[--fo-primary]"
                     : "text-[--fo-text-muted] border-transparent hover:text-base-content"
@@ -481,43 +382,56 @@ const CreatorProfilePage: NextPage = () => {
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Content */}
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-4 py-6">
         {activeTab === "posts" && (
           <div className="space-y-4">
             {isLoadingPosts ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="fo-card p-4 animate-pulse">
-                    <div className="flex gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-base-300" />
-                      <div className="flex-1">
-                        <div className="h-4 bg-base-300 rounded w-1/4 mb-1" />
-                        <div className="h-3 bg-base-300 rounded w-1/6" />
-                      </div>
+              // Loading skeleton
+              [...Array(3)].map((_, i) => (
+                <div key={i} className="fo-post-card animate-pulse">
+                  <div className="fo-post-header">
+                    <div className="w-10 h-10 rounded-full bg-base-300" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-base-300 rounded w-24" />
+                      <div className="h-3 bg-base-300 rounded w-16" />
                     </div>
-                    <div className="h-4 bg-base-300 rounded w-3/4 mb-4" />
-                    <div className="h-48 bg-base-300 rounded" />
                   </div>
-                ))}
-              </div>
-            ) : displayPosts.length > 0 ? (
-              displayPosts.map(post => (
+                  <div className="fo-post-content">
+                    <div className="h-4 bg-base-300 rounded w-full mb-2" />
+                    <div className="h-4 bg-base-300 rounded w-2/3" />
+                  </div>
+                  <div className="h-48 bg-base-300 rounded" />
+                </div>
+              ))
+            ) : activePosts.length > 0 ? (
+              activePosts.map(post => (
                 <PostCard
-                  key={Number(post.id)}
+                  key={post.id.toString()}
                   post={post}
-                  creatorName={displayCreator.displayName}
-                  creatorVerified={displayCreator.isVerified}
-                  profileImageCID={displayCreator.profileImageCID}
+                  creatorName={creator.displayName}
+                  creatorVerified={creator.isVerified}
+                  profileImageCID={creator.profileImageCID}
                   isSubscribed={isSubscribed}
                   subscribedTierId={subscribedTierId}
                 />
               ))
             ) : (
-              <div className="text-center py-12">
-                <PhotoIcon className="w-16 h-16 mx-auto text-[--fo-text-muted] mb-4" />
+              <div className="text-center py-16">
+                <PhotoIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
                 <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
-                <p className="text-[--fo-text-secondary]">This creator hasn&apos;t posted anything yet.</p>
+                <p className="text-[--fo-text-secondary]">
+                  {connectedAddress === creatorAddress
+                    ? "Create your first post to share with your subscribers!"
+                    : "This creator hasn't posted anything yet."}
+                </p>
+                {connectedAddress === creatorAddress && (
+                  <Link href="/create" className="fo-btn-primary mt-4 inline-block">
+                    Create Post
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -525,56 +439,71 @@ const CreatorProfilePage: NextPage = () => {
 
         {activeTab === "media" && (
           <div className="grid grid-cols-3 gap-1">
-            {displayPosts
-              .filter(p => p.contentType === 1 || p.contentType === 2)
-              .map(post => {
-                const canView =
-                  post.accessLevel === AccessLevel.PUBLIC ||
-                  (isSubscribed && post.accessLevel === AccessLevel.SUBSCRIBERS) ||
-                  (isSubscribed && subscribedTierId >= post.requiredTierId);
-
-                return (
-                  <div
-                    key={Number(post.id)}
-                    className="aspect-square bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 relative overflow-hidden"
-                  >
-                    {canView && post.contentCID ? (
-                      <Image src={getIpfsUrl(post.contentCID)} alt="" fill className="object-cover" unoptimized />
-                    ) : canView ? (
-                      <PhotoIcon className="w-8 h-8 text-[--fo-text-muted] absolute inset-0 m-auto" />
-                    ) : (
-                      <div className="absolute inset-0 bg-base-300/80 backdrop-blur flex items-center justify-center">
-                        <LockClosedIcon className="w-8 h-8 text-[--fo-text-muted]" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            {activePosts
+              .filter(p => p.contentType !== 0 && p.contentCID)
+              .map(post => (
+                <div key={post.id.toString()} className="aspect-square bg-base-300 relative overflow-hidden">
+                  <Image src={getIpfsUrl(post.contentCID)} alt="" fill className="object-cover" unoptimized />
+                </div>
+              ))}
+            {activePosts.filter(p => p.contentType !== 0 && p.contentCID).length === 0 && (
+              <div className="col-span-3 text-center py-16">
+                <PhotoIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
+                <p className="text-[--fo-text-secondary]">No media posts yet</p>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === "about" && (
           <div className="fo-card p-6">
-            <h3 className="font-bold mb-4">About {displayCreator.displayName}</h3>
-            <p className="text-[--fo-text-secondary] mb-4">{displayCreator.bio}</p>
+            <h3 className="font-bold mb-4">About {creator.displayName}</h3>
+            <p className="text-[--fo-text-secondary] mb-6">{creator.bio || "No bio provided."}</p>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-[--fo-text-muted]">Joined</span>
-                <span>{formatJoinDate(displayCreator.createdAt)}</span>
+                <span>{formatJoinDate(creator.createdAt)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[--fo-text-muted]">Wallet</span>
-                <Address address={displayCreator.address} />
+                <span className="text-[--fo-text-muted]">Total Subscribers</span>
+                <span>{Number(creator.totalSubscribers)}</span>
               </div>
-              {hasOnChainData && (
-                <div className="flex justify-between">
-                  <span className="text-[--fo-text-muted]">Total Earned</span>
-                  <span className="font-semibold text-green-600">{formatEther(displayCreator.totalEarnings)} MNT</span>
-                </div>
-              )}
+              <div className="flex justify-between">
+                <span className="text-[--fo-text-muted]">Total Posts</span>
+                <span>{postCount}</span>
+              </div>
             </div>
           </div>
         )}
+      </div>
+
+      {/* Subscription Tiers */}
+      <div id="tiers" className="bg-base-200 py-12">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-2xl font-bold mb-6 text-center">Subscription Tiers</h2>
+          {activeTiers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {activeTiers.map((tier, index) => (
+                <TierCard
+                  key={index}
+                  tier={tier}
+                  isCurrentTier={isSubscribed && subscribedTierId === BigInt(index)}
+                  onSubscribe={() => handleSubscribe(index, tier.price)}
+                  isLoading={isSubscribing}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-[--fo-text-secondary]">No subscription tiers available yet.</p>
+              {connectedAddress === creatorAddress && (
+                <Link href="/earnings" className="fo-btn-primary mt-4 inline-block">
+                  Create Tiers
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

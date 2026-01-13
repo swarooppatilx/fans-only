@@ -1,576 +1,137 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useState } from "react";
 import Link from "next/link";
-import { formatEther } from "viem";
 import { useDisconnect } from "wagmi";
 import {
   ArrowRightOnRectangleIcon,
   BellIcon,
-  CameraIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  CreditCardIcon,
-  ExclamationTriangleIcon,
-  PaintBrushIcon,
-  ShieldCheckIcon,
+  MoonIcon,
+  PencilIcon,
+  SunIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
-import { getIpfsUrl, useCurrentCreator, useUpdateProfile } from "~~/hooks/fansonly/useCreatorProfile";
-
-type SettingsTab = "profile" | "notifications" | "privacy" | "payments" | "appearance";
-
-interface NotificationSetting {
-  id: string;
-  label: string;
-  description: string;
-  enabled: boolean;
-}
+import { useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfile";
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
-  const [showSaved, setShowSaved] = useState(false);
-
-  // Contract hooks
-  const { creator, isCreator, isLoading: isLoadingCreator, address, refetch } = useCurrentCreator();
-  const { updateProfile, isPending: isSaving, isSuccess: updateSuccess } = useUpdateProfile();
+  const { isCreator, creator } = useCurrentCreator();
   const { disconnect } = useDisconnect();
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
 
-  // Profile state - will be populated from contract data
-  const [profile, setProfile] = useState({
-    displayName: "",
-    username: "",
-    bio: "",
-    profileImageCID: "",
-    bannerImageCID: "",
+  // Notification preferences (local state - would be stored off-chain in production)
+  const [notifications, setNotifications] = useState({
+    newSubscribers: true,
+    likes: false,
+    comments: true,
   });
 
-  // Sync profile state with contract data
-  useEffect(() => {
-    if (creator) {
-      setProfile({
-        displayName: creator.displayName,
-        username: creator.username,
-        bio: creator.bio,
-        profileImageCID: creator.profileImageCID,
-        bannerImageCID: creator.bannerImageCID,
-      });
-    }
-  }, [creator]);
-
-  // Show saved message on successful update
-  useEffect(() => {
-    if (updateSuccess) {
-      setShowSaved(true);
-      refetch();
-      setTimeout(() => setShowSaved(false), 3000);
-    }
-  }, [updateSuccess, refetch]);
-
-  // Notification settings
-  const [notifications, setNotifications] = useState<NotificationSetting[]>([
-    {
-      id: "new_subscriber",
-      label: "New Subscribers",
-      description: "When someone subscribes to your content",
-      enabled: true,
-    },
-    {
-      id: "subscription_renewal",
-      label: "Subscription Renewals",
-      description: "When a subscriber renews",
-      enabled: true,
-    },
-    { id: "tips", label: "Tips Received", description: "When you receive a tip", enabled: true },
-    { id: "messages", label: "New Messages", description: "When you receive a direct message", enabled: true },
-    { id: "likes", label: "Likes", description: "When someone likes your post", enabled: false },
-    { id: "comments", label: "Comments", description: "When someone comments on your post", enabled: true },
-    { id: "mentions", label: "Mentions", description: "When someone mentions you", enabled: true },
-    { id: "marketing", label: "Marketing & Updates", description: "Platform news and feature updates", enabled: false },
-  ]);
-
-  // Privacy settings
-  const [privacy, setPrivacy] = useState({
-    showSubscriberCount: true,
-    showEarnings: false,
-    allowMessages: "subscribers" as "everyone" | "subscribers" | "none",
-    showOnlineStatus: true,
-    hideFromSearch: false,
-  });
-
-  // Appearance settings
-  const [appearance, setAppearance] = useState({
-    theme: "system" as "light" | "dark" | "system",
-    compactMode: false,
-    showPreviews: true,
-  });
-
-  const tabs = [
-    { id: "profile" as const, label: "Profile", icon: UserCircleIcon },
-    { id: "notifications" as const, label: "Notifications", icon: BellIcon },
-    { id: "privacy" as const, label: "Privacy", icon: ShieldCheckIcon },
-    { id: "payments" as const, label: "Payments", icon: CreditCardIcon },
-    { id: "appearance" as const, label: "Appearance", icon: PaintBrushIcon },
-  ];
-
-  const handleSave = async () => {
-    if (!isCreator) return;
-    try {
-      await updateProfile(profile.displayName, profile.bio, profile.profileImageCID, profile.bannerImageCID);
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-    }
-  };
-
-  const toggleNotification = (id: string) => {
-    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, enabled: !n.enabled } : n)));
-  };
+  const profileLink = isCreator && creator?.username ? `/creator/${creator.username}` : "/profile/create";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-base-200 to-base-300">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <h1 className="text-3xl font-bold mb-8">Settings</h1>
+    <div className="min-h-screen py-8 px-4">
+      <div className="max-w-xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Sidebar */}
-          <div className="w-full md:w-64 flex-shrink-0">
-            <div className="fo-card p-2">
-              {tabs.map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                    activeTab === tab.id ? "bg-fo-primary text-white" : "hover:bg-base-200 text-base-content"
-                  }`}
-                >
-                  <tab.icon className="h-5 w-5" />
-                  <span className="font-medium">{tab.label}</span>
-                </button>
-              ))}
+        {/* Account Section */}
+        <div className="fo-card p-4 mb-4">
+          <h2 className="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Account</h2>
 
-              <hr className="my-2 border-base-300" />
-
-              <button
-                onClick={() => disconnect()}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-red-500 hover:bg-red-500/10"
-              >
-                <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                <span className="font-medium">Disconnect Wallet</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1">
-            {/* Profile Tab */}
-            {activeTab === "profile" && (
-              <div className="fo-card p-6 space-y-6">
-                <h2 className="text-xl font-bold">Profile Settings</h2>
-
-                {/* Not a creator warning */}
-                {!isLoadingCreator && !isCreator && (
-                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                    <p className="text-yellow-600 font-medium">You haven&apos;t created a creator profile yet.</p>
-                    <Link href="/profile/create" className="text-fo-primary hover:underline text-sm">
-                      Create your profile →
-                    </Link>
-                  </div>
-                )}
-
-                {/* Loading state */}
-                {isLoadingCreator && (
-                  <div className="flex justify-center py-8">
-                    <span className="loading loading-spinner loading-lg text-fo-primary"></span>
-                  </div>
-                )}
-
-                {/* Avatar & Banner */}
-                {isCreator && (
-                  <>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-6">
-                        <div className="relative">
-                          <Image
-                            src={getIpfsUrl(profile.profileImageCID) || "/placeholder-avatar.png"}
-                            alt="Avatar"
-                            width={80}
-                            height={80}
-                            className="rounded-full bg-base-300 object-cover"
-                          />
-                          <button className="absolute bottom-0 right-0 p-1.5 bg-fo-primary text-white rounded-full hover:bg-fo-primary-dark transition-colors">
-                            <CameraIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">Profile Photo</h3>
-                          <p className="text-sm text-base-content/60">JPG, PNG or GIF. Max 5MB.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Form Fields */}
-                    <div className="grid gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Display Name</label>
-                        <input
-                          type="text"
-                          value={profile.displayName}
-                          onChange={e => setProfile({ ...profile, displayName: e.target.value })}
-                          className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Username</label>
-                        <div className="flex">
-                          <span className="px-4 py-2 bg-base-300 rounded-l-lg text-base-content/60">@</span>
-                          <input
-                            type="text"
-                            value={profile.username}
-                            disabled
-                            className="flex-1 px-4 py-2 bg-base-300 rounded-r-lg text-base-content/60 cursor-not-allowed"
-                          />
-                        </div>
-                        <p className="text-xs text-base-content/50 mt-1">
-                          Username cannot be changed after registration
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Bio</label>
-                        <textarea
-                          value={profile.bio}
-                          onChange={e => setProfile({ ...profile, bio: e.target.value })}
-                          rows={4}
-                          className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary resize-none"
-                        />
-                        <p className="text-xs text-base-content/50 mt-1">{profile.bio.length}/500 characters</p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Profile Image CID</label>
-                        <input
-                          type="text"
-                          value={profile.profileImageCID}
-                          onChange={e => setProfile({ ...profile, profileImageCID: e.target.value })}
-                          placeholder="Qm..."
-                          className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm"
-                        />
-                        <p className="text-xs text-base-content/50 mt-1">IPFS CID for your profile image</p>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Banner Image CID</label>
-                        <input
-                          type="text"
-                          value={profile.bannerImageCID}
-                          onChange={e => setProfile({ ...profile, bannerImageCID: e.target.value })}
-                          placeholder="Qm..."
-                          className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm"
-                        />
-                        <p className="text-xs text-base-content/50 mt-1">IPFS CID for your banner image</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Notifications Tab */}
-            {activeTab === "notifications" && (
-              <div className="fo-card p-6 space-y-6">
-                <h2 className="text-xl font-bold">Notification Preferences</h2>
-                <p className="text-base-content/60">Choose what notifications you want to receive.</p>
-
-                <div className="space-y-4">
-                  {notifications.map(notification => (
-                    <div
-                      key={notification.id}
-                      className="flex items-center justify-between p-4 bg-base-200/50 rounded-lg"
-                    >
-                      <div>
-                        <h3 className="font-medium">{notification.label}</h3>
-                        <p className="text-sm text-base-content/60">{notification.description}</p>
-                      </div>
-                      <button
-                        onClick={() => toggleNotification(notification.id)}
-                        className={`relative w-12 h-6 rounded-full transition-colors ${
-                          notification.enabled ? "bg-fo-primary" : "bg-base-300"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                            notification.enabled ? "left-7" : "left-1"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Privacy Tab */}
-            {activeTab === "privacy" && (
-              <div className="fo-card p-6 space-y-6">
-                <h2 className="text-xl font-bold">Privacy Settings</h2>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-base-200/50 rounded-lg">
-                    <div>
-                      <h3 className="font-medium">Show Subscriber Count</h3>
-                      <p className="text-sm text-base-content/60">Display your subscriber count publicly</p>
-                    </div>
-                    <button
-                      onClick={() => setPrivacy({ ...privacy, showSubscriberCount: !privacy.showSubscriberCount })}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${
-                        privacy.showSubscriberCount ? "bg-fo-primary" : "bg-base-300"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                          privacy.showSubscriberCount ? "left-7" : "left-1"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-base-200/50 rounded-lg">
-                    <div>
-                      <h3 className="font-medium">Show Online Status</h3>
-                      <p className="text-sm text-base-content/60">Let others see when you&apos;re online</p>
-                    </div>
-                    <button
-                      onClick={() => setPrivacy({ ...privacy, showOnlineStatus: !privacy.showOnlineStatus })}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${
-                        privacy.showOnlineStatus ? "bg-fo-primary" : "bg-base-300"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                          privacy.showOnlineStatus ? "left-7" : "left-1"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-base-200/50 rounded-lg">
-                    <div>
-                      <h3 className="font-medium">Hide from Search</h3>
-                      <p className="text-sm text-base-content/60">Don&apos;t appear in explore or search results</p>
-                    </div>
-                    <button
-                      onClick={() => setPrivacy({ ...privacy, hideFromSearch: !privacy.hideFromSearch })}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${
-                        privacy.hideFromSearch ? "bg-fo-primary" : "bg-base-300"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                          privacy.hideFromSearch ? "left-7" : "left-1"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="p-4 bg-base-200/50 rounded-lg">
-                    <h3 className="font-medium mb-2">Who can message you</h3>
-                    <select
-                      value={privacy.allowMessages}
-                      onChange={e =>
-                        setPrivacy({ ...privacy, allowMessages: e.target.value as typeof privacy.allowMessages })
-                      }
-                      className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
-                    >
-                      <option value="everyone">Everyone</option>
-                      <option value="subscribers">Subscribers Only</option>
-                      <option value="none">No One</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Payments Tab */}
-            {activeTab === "payments" && (
-              <div className="fo-card p-6 space-y-6">
-                <h2 className="text-xl font-bold">Payment Settings</h2>
-
-                {/* Connected Wallet */}
-                <div className="p-4 bg-base-200/50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Connected Wallet</h3>
-                      <p className="text-sm text-base-content/60 font-mono">
-                        {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected"}
-                      </p>
-                    </div>
-                    {address ? (
-                      <span className="px-3 py-1 bg-green-500/10 text-green-600 text-sm font-medium rounded-full">
-                        Connected
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 bg-red-500/10 text-red-600 text-sm font-medium rounded-full">
-                        Disconnected
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Payout Address Info */}
-                <div className="p-4 bg-base-200/50 rounded-lg">
-                  <h3 className="font-medium">Payout Address</h3>
-                  <p className="text-xs text-base-content/50 mb-2">
-                    Earnings are sent directly to your connected wallet
-                  </p>
-                  <p className="font-mono text-sm text-base-content/80 break-all">
-                    {address || "Connect wallet to see address"}
-                  </p>
-                </div>
-
-                {/* Earnings Summary */}
-                <div className="p-4 bg-gradient-to-r from-fo-primary/10 to-fo-accent/10 rounded-lg">
-                  <h3 className="font-semibold mb-3">Earnings Summary</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-base-content/60">Total Earnings</p>
-                      <p className="text-xl font-bold text-green-600">
-                        {creator ? formatEther(creator.totalEarnings) : "0"} MNT
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-base-content/60">Subscribers</p>
-                      <p className="text-xl font-bold">{creator ? Number(creator.totalSubscribers) : 0}</p>
-                    </div>
-                  </div>
-                  <Link href="/earnings" className="fo-btn-primary w-full mt-4 text-center block">
-                    View Earnings Dashboard
-                  </Link>
-                </div>
-
-                {/* Transaction History Link */}
-                <div className="flex items-center justify-between p-4 bg-base-200/50 rounded-lg cursor-pointer hover:bg-base-200 transition-colors">
-                  <div>
-                    <h3 className="font-medium">Transaction History</h3>
-                    <p className="text-sm text-base-content/60">View all your transactions</p>
-                  </div>
-                  <ChevronRightIcon className="h-5 w-5 text-base-content/50" />
-                </div>
-              </div>
-            )}
-
-            {/* Appearance Tab */}
-            {activeTab === "appearance" && (
-              <div className="fo-card p-6 space-y-6">
-                <h2 className="text-xl font-bold">Appearance</h2>
-
-                {/* Theme */}
-                <div>
-                  <h3 className="font-medium mb-3">Theme</h3>
-                  <div className="grid grid-cols-3 gap-3">
-                    {(["light", "dark", "system"] as const).map(theme => (
-                      <button
-                        key={theme}
-                        onClick={() => setAppearance({ ...appearance, theme })}
-                        className={`p-4 rounded-lg border-2 transition-colors capitalize ${
-                          appearance.theme === theme
-                            ? "border-fo-primary bg-fo-primary/10"
-                            : "border-base-300 hover:border-fo-primary/50"
-                        }`}
-                      >
-                        {theme}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Other Settings */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-base-200/50 rounded-lg">
-                    <div>
-                      <h3 className="font-medium">Compact Mode</h3>
-                      <p className="text-sm text-base-content/60">Reduce spacing for more content</p>
-                    </div>
-                    <button
-                      onClick={() => setAppearance({ ...appearance, compactMode: !appearance.compactMode })}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${
-                        appearance.compactMode ? "bg-fo-primary" : "bg-base-300"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                          appearance.compactMode ? "left-7" : "left-1"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-base-200/50 rounded-lg">
-                    <div>
-                      <h3 className="font-medium">Show Link Previews</h3>
-                      <p className="text-sm text-base-content/60">Display previews for shared links</p>
-                    </div>
-                    <button
-                      onClick={() => setAppearance({ ...appearance, showPreviews: !appearance.showPreviews })}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${
-                        appearance.showPreviews ? "bg-fo-primary" : "bg-base-300"
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                          appearance.showPreviews ? "left-7" : "left-1"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Save Button */}
-            <div className="mt-6 flex items-center justify-between">
+          <Link href={profileLink} className="flex items-center justify-between p-3 hover:bg-base-200 rounded-lg -mx-1">
+            <div className="flex items-center gap-3">
+              <UserCircleIcon className="w-5 h-5 text-base-content/60" />
               <div>
-                {showSaved && (
-                  <span className="text-green-600 flex items-center gap-2">
-                    <CheckIcon className="h-5 w-5" />
-                    Settings saved!
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={handleSave}
-                disabled={isSaving || !isCreator}
-                className="fo-btn-primary flex items-center gap-2 disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Updating on-chain...
-                  </>
-                ) : (
-                  "Save to Blockchain"
-                )}
-              </button>
-            </div>
-
-            {/* Danger Zone */}
-            <div className="mt-8 p-6 border-2 border-red-500/30 rounded-lg">
-              <div className="flex items-start gap-3">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-500 flex-shrink-0" />
-                <div>
-                  <h3 className="font-bold text-red-500">Danger Zone</h3>
-                  <p className="text-sm text-base-content/60 mt-1">
-                    Once you delete your account, there is no going back. Please be certain.
-                  </p>
-                  <button className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                    Delete Account
-                  </button>
+                <div className="font-medium">{isCreator ? `@${creator?.username}` : "Create Profile"}</div>
+                <div className="text-sm text-base-content/60">
+                  {isCreator ? "View and edit your profile" : "Become a creator"}
                 </div>
               </div>
             </div>
+            <PencilIcon className="w-4 h-4 text-base-content/40" />
+          </Link>
+        </div>
+
+        {/* Appearance */}
+        <div className="fo-card p-4 mb-4">
+          <h2 className="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Appearance</h2>
+
+          <div className="space-y-2">
+            {(["light", "dark", "system"] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTheme(t)}
+                className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                  theme === t ? "bg-fo-primary/10 border border-fo-primary" : "hover:bg-base-200"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {t === "light" && <SunIcon className="w-5 h-5" />}
+                  {t === "dark" && <MoonIcon className="w-5 h-5" />}
+                  {t === "system" && (
+                    <div className="w-5 h-5 flex">
+                      <SunIcon className="w-3 h-3" />
+                      <MoonIcon className="w-3 h-3" />
+                    </div>
+                  )}
+                  <span className="capitalize">{t}</span>
+                </div>
+                {theme === t && <div className="w-2 h-2 rounded-full bg-fo-primary"></div>}
+              </button>
+            ))}
           </div>
         </div>
+
+        {/* Notifications */}
+        <div className="fo-card p-4 mb-4">
+          <h2 className="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">
+            <BellIcon className="w-4 h-4 inline mr-1" />
+            Notifications
+          </h2>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span>New subscribers</span>
+              <input
+                type="checkbox"
+                checked={notifications.newSubscribers}
+                onChange={e => setNotifications({ ...notifications, newSubscribers: e.target.checked })}
+                className="toggle toggle-primary toggle-sm"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Likes on posts</span>
+              <input
+                type="checkbox"
+                checked={notifications.likes}
+                onChange={e => setNotifications({ ...notifications, likes: e.target.checked })}
+                className="toggle toggle-primary toggle-sm"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Comments</span>
+              <input
+                type="checkbox"
+                checked={notifications.comments}
+                onChange={e => setNotifications({ ...notifications, comments: e.target.checked })}
+                className="toggle toggle-primary toggle-sm"
+              />
+            </div>
+          </div>
+
+          <p className="text-xs text-base-content/50 mt-3">Notification preferences are stored locally.</p>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="fo-card p-4 border-red-500/30">
+          <button
+            onClick={() => disconnect()}
+            className="w-full flex items-center justify-center gap-2 p-3 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+          >
+            <ArrowRightOnRectangleIcon className="w-5 h-5" />
+            Disconnect Wallet
+          </button>
+        </div>
+
+        <p className="text-center text-xs text-base-content/40 mt-6">FansOnly v1.0 • Built on Mantle</p>
       </div>
     </div>
   );

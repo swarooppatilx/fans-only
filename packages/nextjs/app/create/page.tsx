@@ -98,11 +98,20 @@ const CreatePostPage: NextPage = () => {
       return;
     }
 
+    // For non-TEXT posts, require a contentCID
+    if (contentType !== "TEXT" && !contentCID.trim()) {
+      setErrorMessage("Please upload or paste content CID");
+      return;
+    }
+
     setErrorMessage("");
 
     try {
+      // For TEXT posts, use "TEXT_ONLY" as placeholder since contract requires non-empty CID
+      const finalContentCID = contentType === "TEXT" && !contentCID.trim() ? "TEXT_ONLY" : contentCID;
+
       await createPost(
-        contentCID,
+        finalContentCID,
         previewCID,
         caption,
         getContentTypeEnum(contentType),

@@ -1,98 +1,44 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { NextPage } from "next";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import {
-  ArrowTrendingUpIcon,
   BanknotesIcon,
   CalendarDaysIcon,
   ChartBarIcon,
   CurrencyDollarIcon,
   HeartIcon,
   UserGroupIcon,
-  UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import { TierManager } from "~~/components/fansonly/TierManager";
 import { useCreatorPosts } from "~~/hooks/fansonly/useContentPost";
 import { useCreator, useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfile";
-
-// Mock data for demo mode
-const mockEarningsData = {
-  totalEarnings: BigInt("2500000000000000000"),
-  totalSubscribers: BigInt(156),
-  postCount: 47,
-  totalLikes: 1243,
-};
-
-const mockRecentTransactions = [
-  {
-    id: 1,
-    type: "subscription",
-    from: "0x1234...5678",
-    amount: BigInt("50000000000000000"),
-    tier: "Supporter",
-    timestamp: Date.now() - 3600000,
-  },
-  {
-    id: 2,
-    type: "subscription",
-    from: "0x2345...6789",
-    amount: BigInt("150000000000000000"),
-    tier: "VIP",
-    timestamp: Date.now() - 7200000,
-  },
-  {
-    id: 3,
-    type: "renewal",
-    from: "0x3456...7890",
-    amount: BigInt("50000000000000000"),
-    tier: "Supporter",
-    timestamp: Date.now() - 14400000,
-  },
-];
 
 interface StatCardProps {
   title: string;
   value: string;
   subtitle?: string;
   icon: React.ReactNode;
-  trend?: number;
   iconBg?: string;
-  isDemo?: boolean;
 }
 
-const StatCard = ({ title, value, subtitle, icon, trend, iconBg = "bg-[--fo-primary]/10", isDemo }: StatCardProps) => (
-  <div className="fo-card p-4 relative">
-    {isDemo && (
-      <div className="absolute top-2 right-2 bg-warning/20 text-warning text-xs px-2 py-0.5 rounded-full">Demo</div>
-    )}
+const StatCard = ({ title, value, subtitle, icon, iconBg = "bg-[--fo-primary]/10" }: StatCardProps) => (
+  <div className="fo-card p-4">
     <div className="flex items-start justify-between">
       <div>
         <p className="text-sm text-[--fo-text-muted] mb-1">{title}</p>
         <p className="text-2xl font-bold">{value}</p>
         {subtitle && <p className="text-sm text-[--fo-text-secondary] mt-1">{subtitle}</p>}
-        {trend !== undefined && (
-          <div
-            className={`flex items-center gap-1 mt-2 text-sm ${trend >= 0 ? "text-[--fo-success]" : "text-[--fo-error]"}`}
-          >
-            <ArrowTrendingUpIcon className={`w-4 h-4 ${trend < 0 ? "rotate-180" : ""}`} />
-            <span>
-              {trend >= 0 ? "+" : ""}
-              {trend}% this month
-            </span>
-          </div>
-        )}
       </div>
       <div className={`w-12 h-12 rounded-full ${iconBg} flex items-center justify-center`}>{icon}</div>
     </div>
   </div>
 );
 
-// Loading skeleton
 const StatSkeleton = () => (
   <div className="fo-card p-4 animate-pulse">
     <div className="flex items-start justify-between">
@@ -109,7 +55,6 @@ const StatSkeleton = () => (
 const EarningsPage: NextPage = () => {
   const router = useRouter();
   const { address: connectedAddress, isConnected } = useAccount();
-  const [timeRange, setTimeRange] = useState<"week" | "month" | "year" | "all">("month");
 
   // Get creator profile with real data
   const { isCreator, creator, isLoading: isLoadingCreator } = useCurrentCreator();
@@ -124,26 +69,6 @@ const EarningsPage: NextPage = () => {
   const totalLikes = useMemo(() => {
     return posts.reduce((sum, post) => sum + Number(post.likesCount), 0);
   }, [posts]);
-
-  // Determine if we're in demo mode
-  const hasRealData = creator && Number(creator.totalEarnings) > 0;
-  const isDemo = !hasRealData;
-
-  // Use real data or mock data
-  const displayData = {
-    totalEarnings: hasRealData ? creator.totalEarnings : mockEarningsData.totalEarnings,
-    totalSubscribers: hasRealData ? creator.totalSubscribers : mockEarningsData.totalSubscribers,
-    postCount: hasRealData ? postCount : mockEarningsData.postCount,
-    totalLikes: hasRealData ? totalLikes : mockEarningsData.totalLikes,
-  };
-
-  const formatTimeAgo = (timestamp: number) => {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return "Just now";
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    return `${Math.floor(seconds / 86400)}d ago`;
-  };
 
   const isLoading = isLoadingCreator || isLoadingPosts;
 
@@ -207,80 +132,51 @@ const EarningsPage: NextPage = () => {
               {creator && <span className="ml-2 text-[--fo-primary]">@{creator.username}</span>}
             </p>
           </div>
-
-          {/* Time Range Selector */}
-          <div className="flex gap-2 bg-base-200 p-1 rounded-lg">
-            {(["week", "month", "year", "all"] as const).map(range => (
-              <button
-                key={range}
-                onClick={() => setTimeRange(range)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                  timeRange === range ? "bg-base-100 text-base-content shadow-sm" : "text-[--fo-text-muted]"
-                }`}
-              >
-                {range === "all" ? "All Time" : range}
-              </button>
-            ))}
-          </div>
         </div>
-
-        {/* Demo Mode Banner */}
-        {isDemo && (
-          <div className="bg-info/10 border border-info/30 rounded-lg p-4 mb-6">
-            <p className="text-sm text-info">
-              <strong>Demo Mode:</strong> Showing sample data. Real earnings will appear here once you receive
-              subscriptions.
-            </p>
-          </div>
-        )}
 
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title="Total Earnings"
-            value={`${formatEther(displayData.totalEarnings)} MNT`}
-            subtitle="All time (95% after platform fee)"
+            value={`${formatEther(creator?.totalEarnings ?? BigInt(0))} MNT`}
+            subtitle="95% after platform fee"
             icon={<BanknotesIcon className="w-6 h-6 text-[--fo-primary]" />}
-            isDemo={isDemo}
           />
           <StatCard
             title="Total Subscribers"
-            value={Number(displayData.totalSubscribers).toString()}
+            value={Number(creator?.totalSubscribers ?? 0).toString()}
             icon={<UserGroupIcon className="w-6 h-6 text-[--fo-accent]" />}
             iconBg="bg-[--fo-accent]/10"
-            isDemo={isDemo}
           />
           <StatCard
             title="Total Posts"
-            value={displayData.postCount.toString()}
+            value={postCount.toString()}
             icon={<CalendarDaysIcon className="w-6 h-6 text-[--fo-success]" />}
             iconBg="bg-[--fo-success]/10"
-            isDemo={isDemo}
           />
           <StatCard
             title="Total Likes"
-            value={displayData.totalLikes.toLocaleString()}
+            value={totalLikes.toLocaleString()}
             icon={<HeartIcon className="w-6 h-6 text-red-500" />}
             iconBg="bg-red-500/10"
-            isDemo={isDemo}
           />
         </div>
 
         {/* Secondary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="fo-card p-4 text-center">
-            <UserPlusIcon className="w-6 h-6 mx-auto mb-2 text-[--fo-primary]" />
-            <div className="text-xl font-bold">{hasRealData ? Number(creator.totalSubscribers) : 23}</div>
+            <UserGroupIcon className="w-6 h-6 mx-auto mb-2 text-[--fo-primary]" />
+            <div className="text-xl font-bold">{Number(creator?.totalSubscribers ?? 0)}</div>
             <div className="text-sm text-[--fo-text-muted]">Subscribers</div>
           </div>
           <div className="fo-card p-4 text-center">
             <CalendarDaysIcon className="w-6 h-6 mx-auto mb-2 text-[--fo-accent]" />
-            <div className="text-xl font-bold">{displayData.postCount}</div>
+            <div className="text-xl font-bold">{postCount}</div>
             <div className="text-sm text-[--fo-text-muted]">Total Posts</div>
           </div>
           <div className="fo-card p-4 text-center">
             <HeartIcon className="w-6 h-6 mx-auto mb-2 text-red-500" />
-            <div className="text-xl font-bold">{displayData.totalLikes.toLocaleString()}</div>
+            <div className="text-xl font-bold">{totalLikes.toLocaleString()}</div>
             <div className="text-sm text-[--fo-text-muted]">Total Likes</div>
           </div>
           <div className="fo-card p-4 text-center">
@@ -294,59 +190,54 @@ const EarningsPage: NextPage = () => {
           {/* Tier Management */}
           <TierManager tiers={tiers} onTierCreated={() => refetchTiers()} />
 
-          {/* Recent Transactions */}
+          {/* Quick Actions */}
           <div className="fo-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Recent Activity</h2>
-              {isDemo && <span className="text-xs text-warning bg-warning/20 px-2 py-0.5 rounded-full">Demo</span>}
-            </div>
+            <h2 className="text-lg font-bold mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              {mockRecentTransactions.map(tx => (
-                <div key={tx.id} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        tx.type === "subscription"
-                          ? "bg-[--fo-success]/10 text-[--fo-success]"
-                          : "bg-[--fo-primary]/10 text-[--fo-primary]"
-                      }`}
-                    >
-                      {tx.type === "subscription" ? (
-                        <UserPlusIcon className="w-4 h-4" />
-                      ) : (
-                        <CalendarDaysIcon className="w-4 h-4" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">
-                        {tx.type === "subscription" ? "New Subscription" : "Renewal"}
-                      </div>
-                      <div className="text-xs text-[--fo-text-muted]">
-                        {tx.from} · {tx.tier}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-[--fo-success]">+{formatEther(tx.amount)} MNT</div>
-                    <div className="text-xs text-[--fo-text-muted]">{formatTimeAgo(tx.timestamp)}</div>
-                  </div>
+              <Link
+                href="/create"
+                className="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+              >
+                <div>
+                  <div className="font-medium">Create New Post</div>
+                  <div className="text-sm text-[--fo-text-muted]">Share content with your subscribers</div>
                 </div>
-              ))}
+                <span className="text-[--fo-primary]">→</span>
+              </Link>
+              <Link
+                href={`/creator/${creator?.username}`}
+                className="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+              >
+                <div>
+                  <div className="font-medium">View Your Profile</div>
+                  <div className="text-sm text-[--fo-text-muted]">See how subscribers see you</div>
+                </div>
+                <span className="text-[--fo-primary]">→</span>
+              </Link>
+              <Link
+                href="/profile/edit"
+                className="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+              >
+                <div>
+                  <div className="font-medium">Edit Profile</div>
+                  <div className="text-sm text-[--fo-text-muted]">Update your bio and images</div>
+                </div>
+                <span className="text-[--fo-primary]">→</span>
+              </Link>
             </div>
-            <p className="text-xs text-center text-[--fo-text-muted] mt-4">
-              Transaction history from blockchain events coming soon
-            </p>
           </div>
         </div>
 
-        {/* Creator Info */}
+        {/* Earnings Info */}
         <div className="mt-8 fo-card p-6 bg-gradient-to-r from-[--fo-primary]/5 to-[--fo-accent]/5">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold mb-1">Your Earnings</h2>
               <p className="text-[--fo-text-secondary]">
                 Total earned:{" "}
-                <span className="font-semibold text-[--fo-primary]">{formatEther(displayData.totalEarnings)} MNT</span>
+                <span className="font-semibold text-[--fo-primary]">
+                  {formatEther(creator?.totalEarnings ?? BigInt(0))} MNT
+                </span>
                 <span className="text-sm ml-2">(Sent directly to your wallet on each subscription)</span>
               </p>
             </div>

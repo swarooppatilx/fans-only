@@ -33,73 +33,6 @@ import {
   useSubscription,
 } from "~~/hooks/fansonly/useCreatorProfile";
 
-// Mock feed posts for demo when no on-chain data exists
-const mockFeedPosts = [
-  {
-    id: BigInt(1),
-    creator: "0x1234567890123456789012345678901234567890",
-    creatorData: {
-      username: "cryptoartist",
-      displayName: "Crypto Artist",
-      profileImageCID: "",
-      isVerified: true,
-    },
-    contentCID: "",
-    previewCID: "",
-    caption:
-      "Just dropped a new piece! 🎨 This one took me 3 weeks to complete. The details in the background represent the chaos of the crypto markets.",
-    contentType: ContentType.IMAGE,
-    accessLevel: AccessLevel.PUBLIC,
-    requiredTierId: BigInt(0),
-    likesCount: BigInt(142),
-    commentsCount: BigInt(23),
-    createdAt: BigInt(Math.floor(Date.now() / 1000) - 3600),
-    isActive: true,
-  },
-  {
-    id: BigInt(2),
-    creator: "0x2345678901234567890123456789012345678901",
-    creatorData: {
-      username: "defi_guru",
-      displayName: "DeFi Guru",
-      profileImageCID: "",
-      isVerified: true,
-    },
-    contentCID: "",
-    previewCID: "",
-    caption:
-      "🔥 Alpha Alert: New yield farming strategy that's been printing. Full breakdown in this exclusive video for subscribers only!",
-    contentType: ContentType.VIDEO,
-    accessLevel: AccessLevel.SUBSCRIBERS,
-    requiredTierId: BigInt(0),
-    likesCount: BigInt(89),
-    commentsCount: BigInt(15),
-    createdAt: BigInt(Math.floor(Date.now() / 1000) - 7200),
-    isActive: true,
-  },
-  {
-    id: BigInt(3),
-    creator: "0x3456789012345678901234567890123456789012",
-    creatorData: {
-      username: "web3_dev",
-      displayName: "Web3 Developer",
-      profileImageCID: "",
-      isVerified: false,
-    },
-    contentCID: "",
-    previewCID: "",
-    caption:
-      "Tutorial: Building a gas-optimized NFT marketplace in Solidity. Part 1 covers the core listing logic. Code repo in comments! 💻",
-    contentType: ContentType.TEXT,
-    accessLevel: AccessLevel.PUBLIC,
-    requiredTierId: BigInt(0),
-    likesCount: BigInt(256),
-    commentsCount: BigInt(42),
-    createdAt: BigInt(Math.floor(Date.now() / 1000) - 14400),
-    isActive: true,
-  },
-];
-
 // Extended post type with creator data
 interface FeedPost extends Post {
   creatorData?: {
@@ -174,18 +107,9 @@ interface PostCardProps {
   hasLiked: boolean;
   onLike: () => void;
   onUnlike: () => void;
-  isDemo?: boolean;
 }
 
-const PostCard = ({
-  post,
-  isSubscribed,
-  subscribedTierId,
-  hasLiked,
-  onLike,
-  onUnlike,
-  isDemo = false,
-}: PostCardProps) => {
+const PostCard = ({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUnlike }: PostCardProps) => {
   const [localLiked, setLocalLiked] = useState(hasLiked);
   const [localLikeCount, setLocalLikeCount] = useState(Number(post.likesCount));
 
@@ -203,12 +127,6 @@ const PostCard = ({
   };
 
   const handleLikeClick = () => {
-    if (isDemo) {
-      setLocalLiked(!localLiked);
-      setLocalLikeCount(prev => (localLiked ? prev - 1 : prev + 1));
-      return;
-    }
-
     if (localLiked) {
       onUnlike();
       setLocalLiked(false);
@@ -225,14 +143,7 @@ const PostCard = ({
   const displayName = post.creatorData?.displayName || `Creator ${post.creator.slice(0, 6)}`;
 
   return (
-    <div className="fo-post-card relative">
-      {/* Demo Badge */}
-      {isDemo && (
-        <div className="absolute top-2 right-2 bg-warning/20 text-warning text-xs px-2 py-0.5 rounded-full z-10">
-          Demo
-        </div>
-      )}
-
+    <div className="fo-post-card">
       {/* Header */}
       <div className="fo-post-header">
         <Link href={`/creator/${username}`} className="flex items-center gap-3 flex-1">
@@ -331,7 +242,6 @@ function PostCardWithActions({
   isSubscribed,
   subscribedTierId,
   hasLiked: initialHasLiked,
-  isDemo,
 }: Omit<PostCardProps, "onLike" | "onUnlike">) {
   const { likePost } = useLikePost();
   const { unlikePost } = useUnlikePost();
@@ -352,7 +262,6 @@ function PostCardWithActions({
       hasLiked={initialHasLiked}
       onLike={handleLike}
       onUnlike={handleUnlike}
-      isDemo={isDemo}
     />
   );
 }
@@ -463,12 +372,8 @@ const FeedPage: NextPage = () => {
     return feedPosts;
   }, [feedPosts, activeFilter, subscriptionMap]);
 
-  // Determine if we should show mock data
-  const hasRealPosts = feedPosts.length > 0;
-  const displayPosts = hasRealPosts ? filteredPosts : mockFeedPosts.map(p => ({ ...p }) as unknown as FeedPost);
-  const isDemo = !hasRealPosts;
-
   const isLoading = isLoadingCreators;
+  const hasPosts = filteredPosts.length > 0;
 
   return (
     <div className="min-h-screen">
@@ -533,16 +438,6 @@ const FeedPage: NextPage = () => {
           </Link>
         )}
 
-        {/* Demo Mode Banner */}
-        {isDemo && displayPosts.length > 0 && (
-          <div className="bg-info/10 border border-info/30 rounded-lg p-4 mb-4">
-            <p className="text-sm text-info">
-              <strong>Demo Mode:</strong> Showing sample posts. Real posts from on-chain creators will appear here once
-              content is created.
-            </p>
-          </div>
-        )}
-
         {/* Loading State */}
         {isLoading ? (
           <div className="space-y-4">
@@ -550,18 +445,17 @@ const FeedPage: NextPage = () => {
             <PostSkeleton />
             <PostSkeleton />
           </div>
-        ) : displayPosts.length > 0 ? (
+        ) : hasPosts ? (
           <div className="space-y-4">
-            {displayPosts.map(post => {
+            {filteredPosts.map(post => {
               const subData = subscriptionMap.get(post.creator);
               return (
                 <PostCardWithActions
                   key={`${post.creator}-${post.id}`}
                   post={post}
-                  isSubscribed={isDemo || subData?.isSubscribed || false}
+                  isSubscribed={subData?.isSubscribed || false}
                   subscribedTierId={subData?.subscription?.tierId ?? BigInt(0)}
                   hasLiked={likedPostsSet.has(post.id.toString())}
-                  isDemo={isDemo}
                 />
               );
             })}
@@ -582,13 +476,6 @@ const FeedPage: NextPage = () => {
             <Link href="/explore" className="fo-btn-primary inline-block">
               Explore Creators
             </Link>
-          </div>
-        )}
-
-        {/* Load More */}
-        {displayPosts.length > 0 && (
-          <div className="text-center py-8">
-            <button className="fo-btn-secondary">Load More</button>
           </div>
         )}
       </div>
