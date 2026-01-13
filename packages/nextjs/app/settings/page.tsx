@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { formatEther } from "viem";
+import { useDisconnect } from "wagmi";
 import {
   ArrowRightOnRectangleIcon,
   BellIcon,
@@ -15,6 +17,7 @@ import {
   ShieldCheckIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
+import { getIpfsUrl, useCurrentCreator, useUpdateProfile } from "~~/hooks/fansonly/useCreatorProfile";
 
 type SettingsTab = "profile" | "notifications" | "privacy" | "payments" | "appearance";
 
@@ -27,20 +30,43 @@ interface NotificationSetting {
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
-  const [isSaving, setIsSaving] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
 
-  // Profile state
+  // Contract hooks
+  const { creator, isCreator, isLoading: isLoadingCreator, address, refetch } = useCurrentCreator();
+  const { updateProfile, isPending: isSaving, isSuccess: updateSuccess } = useUpdateProfile();
+  const { disconnect } = useDisconnect();
+
+  // Profile state - will be populated from contract data
   const [profile, setProfile] = useState({
-    displayName: "CryptoCreator",
-    username: "cryptocreator",
-    bio: "Web3 enthusiast sharing insights on DeFi, NFTs, and the future of decentralized technology. Diamond hands only! 💎🙌",
-    email: "creator@example.com",
-    website: "https://mysite.com",
-    twitter: "@cryptocreator",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=creator",
-    banner: "",
+    displayName: "",
+    username: "",
+    bio: "",
+    profileImageCID: "",
+    bannerImageCID: "",
   });
+
+  // Sync profile state with contract data
+  useEffect(() => {
+    if (creator) {
+      setProfile({
+        displayName: creator.displayName,
+        username: creator.username,
+        bio: creator.bio,
+        profileImageCID: creator.profileImageCID,
+        bannerImageCID: creator.bannerImageCID,
+      });
+    }
+  }, [creator]);
+
+  // Show saved message on successful update
+  useEffect(() => {
+    if (updateSuccess) {
+      setShowSaved(true);
+      refetch();
+      setTimeout(() => setShowSaved(false), 3000);
+    }
+  }, [updateSuccess, refetch]);
 
   // Notification settings
   const [notifications, setNotifications] = useState<NotificationSetting[]>([
@@ -89,12 +115,12 @@ export default function SettingsPage() {
   ];
 
   const handleSave = async () => {
-    setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    setShowSaved(true);
-    setTimeout(() => setShowSaved(false), 2000);
+    if (!isCreator) return;
+    try {
+      await updateProfile(profile.displayName, profile.bio, profile.profileImageCID, profile.bannerImageCID);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
   };
 
   const toggleNotification = (id: string) => {
@@ -125,9 +151,12 @@ export default function SettingsPage() {
 
               <hr className="my-2 border-base-300" />
 
-              <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-red-500 hover:bg-red-500/10">
+              <button
+                onClick={() => disconnect()}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-red-500 hover:bg-red-500/10"
+              >
                 <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                <span className="font-medium">Sign Out</span>
+                <span className="font-medium">Disconnect Wallet</span>
               </button>
             </div>
           </div>
@@ -139,94 +168,112 @@ export default function SettingsPage() {
               <div className="fo-card p-6 space-y-6">
                 <h2 className="text-xl font-bold">Profile Settings</h2>
 
+                {/* Not a creator warning */}
+                {!isLoadingCreator && !isCreator && (
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                    <p className="text-yellow-600 font-medium">You haven&apos;t created a creator profile yet.</p>
+                    <Link href="/profile/create" className="text-fo-primary hover:underline text-sm">
+                      Create your profile →
+                    </Link>
+                  </div>
+                )}
+
+                {/* Loading state */}
+                {isLoadingCreator && (
+                  <div className="flex justify-center py-8">
+                    <span className="loading loading-spinner loading-lg text-fo-primary"></span>
+                  </div>
+                )}
+
                 {/* Avatar & Banner */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-6">
-                    <div className="relative">
-                      <Image
-                        src={profile.avatar}
-                        alt="Avatar"
-                        width={80}
-                        height={80}
-                        className="rounded-full bg-base-300"
-                      />
-                      <button className="absolute bottom-0 right-0 p-1.5 bg-fo-primary text-white rounded-full hover:bg-fo-primary-dark transition-colors">
-                        <CameraIcon className="h-4 w-4" />
-                      </button>
+                {isCreator && (
+                  <>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-6">
+                        <div className="relative">
+                          <Image
+                            src={getIpfsUrl(profile.profileImageCID) || "/placeholder-avatar.png"}
+                            alt="Avatar"
+                            width={80}
+                            height={80}
+                            className="rounded-full bg-base-300 object-cover"
+                          />
+                          <button className="absolute bottom-0 right-0 p-1.5 bg-fo-primary text-white rounded-full hover:bg-fo-primary-dark transition-colors">
+                            <CameraIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">Profile Photo</h3>
+                          <p className="text-sm text-base-content/60">JPG, PNG or GIF. Max 5MB.</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold">Profile Photo</h3>
-                      <p className="text-sm text-base-content/60">JPG, PNG or GIF. Max 5MB.</p>
+
+                    {/* Form Fields */}
+                    <div className="grid gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Display Name</label>
+                        <input
+                          type="text"
+                          value={profile.displayName}
+                          onChange={e => setProfile({ ...profile, displayName: e.target.value })}
+                          className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Username</label>
+                        <div className="flex">
+                          <span className="px-4 py-2 bg-base-300 rounded-l-lg text-base-content/60">@</span>
+                          <input
+                            type="text"
+                            value={profile.username}
+                            disabled
+                            className="flex-1 px-4 py-2 bg-base-300 rounded-r-lg text-base-content/60 cursor-not-allowed"
+                          />
+                        </div>
+                        <p className="text-xs text-base-content/50 mt-1">
+                          Username cannot be changed after registration
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Bio</label>
+                        <textarea
+                          value={profile.bio}
+                          onChange={e => setProfile({ ...profile, bio: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary resize-none"
+                        />
+                        <p className="text-xs text-base-content/50 mt-1">{profile.bio.length}/500 characters</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Profile Image CID</label>
+                        <input
+                          type="text"
+                          value={profile.profileImageCID}
+                          onChange={e => setProfile({ ...profile, profileImageCID: e.target.value })}
+                          placeholder="Qm..."
+                          className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm"
+                        />
+                        <p className="text-xs text-base-content/50 mt-1">IPFS CID for your profile image</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Banner Image CID</label>
+                        <input
+                          type="text"
+                          value={profile.bannerImageCID}
+                          onChange={e => setProfile({ ...profile, bannerImageCID: e.target.value })}
+                          placeholder="Qm..."
+                          className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm"
+                        />
+                        <p className="text-xs text-base-content/50 mt-1">IPFS CID for your banner image</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Form Fields */}
-                <div className="grid gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Display Name</label>
-                    <input
-                      type="text"
-                      value={profile.displayName}
-                      onChange={e => setProfile({ ...profile, displayName: e.target.value })}
-                      className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Username</label>
-                    <div className="flex">
-                      <span className="px-4 py-2 bg-base-300 rounded-l-lg text-base-content/60">@</span>
-                      <input
-                        type="text"
-                        value={profile.username}
-                        onChange={e => setProfile({ ...profile, username: e.target.value })}
-                        className="flex-1 px-4 py-2 bg-base-200 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Bio</label>
-                    <textarea
-                      value={profile.bio}
-                      onChange={e => setProfile({ ...profile, bio: e.target.value })}
-                      rows={4}
-                      className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary resize-none"
-                    />
-                    <p className="text-xs text-base-content/50 mt-1">{profile.bio.length}/500 characters</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={profile.email}
-                      onChange={e => setProfile({ ...profile, email: e.target.value })}
-                      className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Website</label>
-                    <input
-                      type="url"
-                      value={profile.website}
-                      onChange={e => setProfile({ ...profile, website: e.target.value })}
-                      className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Twitter</label>
-                    <input
-                      type="text"
-                      value={profile.twitter}
-                      onChange={e => setProfile({ ...profile, twitter: e.target.value })}
-                      className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
-                    />
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -355,24 +402,31 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-medium">Connected Wallet</h3>
-                      <p className="text-sm text-base-content/60 font-mono">0x1234...5678</p>
+                      <p className="text-sm text-base-content/60 font-mono">
+                        {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Not connected"}
+                      </p>
                     </div>
-                    <span className="px-3 py-1 bg-green-500/10 text-green-600 text-sm font-medium rounded-full">
-                      Connected
-                    </span>
+                    {address ? (
+                      <span className="px-3 py-1 bg-green-500/10 text-green-600 text-sm font-medium rounded-full">
+                        Connected
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-red-500/10 text-red-600 text-sm font-medium rounded-full">
+                        Disconnected
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Payout Address */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Payout Address</label>
-                  <p className="text-xs text-base-content/50 mb-2">Where your earnings will be sent</p>
-                  <input
-                    type="text"
-                    placeholder="0x..."
-                    defaultValue="0x1234567890abcdef1234567890abcdef12345678"
-                    className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm"
-                  />
+                {/* Payout Address Info */}
+                <div className="p-4 bg-base-200/50 rounded-lg">
+                  <h3 className="font-medium">Payout Address</h3>
+                  <p className="text-xs text-base-content/50 mb-2">
+                    Earnings are sent directly to your connected wallet
+                  </p>
+                  <p className="font-mono text-sm text-base-content/80 break-all">
+                    {address || "Connect wallet to see address"}
+                  </p>
                 </div>
 
                 {/* Earnings Summary */}
@@ -380,12 +434,14 @@ export default function SettingsPage() {
                   <h3 className="font-semibold mb-3">Earnings Summary</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-base-content/60">Available</p>
-                      <p className="text-xl font-bold text-green-600">2.45 MNT</p>
+                      <p className="text-sm text-base-content/60">Total Earnings</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {creator ? formatEther(creator.totalEarnings) : "0"} MNT
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-base-content/60">Pending</p>
-                      <p className="text-xl font-bold">0.82 MNT</p>
+                      <p className="text-sm text-base-content/60">Subscribers</p>
+                      <p className="text-xl font-bold">{creator ? Number(creator.totalSubscribers) : 0}</p>
                     </div>
                   </div>
                   <Link href="/earnings" className="fo-btn-primary w-full mt-4 text-center block">
@@ -482,14 +538,18 @@ export default function SettingsPage() {
                   </span>
                 )}
               </div>
-              <button onClick={handleSave} disabled={isSaving} className="fo-btn-primary flex items-center gap-2">
+              <button
+                onClick={handleSave}
+                disabled={isSaving || !isCreator}
+                className="fo-btn-primary flex items-center gap-2 disabled:opacity-50"
+              >
                 {isSaving ? (
                   <>
                     <span className="loading loading-spinner loading-sm"></span>
-                    Saving...
+                    Updating on-chain...
                   </>
                 ) : (
-                  "Save Changes"
+                  "Save to Blockchain"
                 )}
               </button>
             </div>

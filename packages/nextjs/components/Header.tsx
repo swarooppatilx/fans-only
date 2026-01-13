@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { hardhat } from "viem/chains";
@@ -25,6 +26,7 @@ import {
   UserCircleIcon as UserIconSolid,
 } from "@heroicons/react/24/solid";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { getIpfsUrl, useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfile";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 type HeaderMenuLink = {
@@ -89,15 +91,45 @@ export const menuLinks: HeaderMenuLink[] = [
 
 export const HeaderMenuLinks = () => {
   const pathname = usePathname();
+  const { isCreator, creator } = useCurrentCreator();
+
+  // Dynamic profile link based on creator status
+  const getProfileLink = () => {
+    if (isCreator && creator?.username) {
+      return `/creator/${creator.username}`;
+    }
+    return "/profile/create";
+  };
 
   return (
     <>
       {menuLinks.map(({ label, href, icon, iconActive }) => {
-        const isActive = pathname === href;
+        // Handle dynamic profile link
+        const actualHref = label === "Profile" ? getProfileLink() : href;
+        const isActive = pathname === actualHref || (label === "Profile" && pathname.startsWith("/creator/"));
+
+        // For Profile, show creator avatar if available
+        const showCreatorAvatar = label === "Profile" && isCreator && creator?.profileImageCID;
+
         return (
           <li key={href}>
-            <Link href={href} passHref className={`fo-nav-link ${isActive ? "active" : ""}`}>
-              {isActive && iconActive ? iconActive : icon}
+            <Link href={actualHref} passHref className={`fo-nav-link ${isActive ? "active" : ""}`}>
+              {showCreatorAvatar ? (
+                <div className="w-6 h-6 rounded-full overflow-hidden ring-2 ring-[--fo-primary]">
+                  <Image
+                    src={getIpfsUrl(creator.profileImageCID)}
+                    alt={creator.displayName || "Profile"}
+                    width={24}
+                    height={24}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                </div>
+              ) : isActive && iconActive ? (
+                iconActive
+              ) : (
+                icon
+              )}
               <span>{label}</span>
             </Link>
           </li>
@@ -113,11 +145,15 @@ export const HeaderMenuLinks = () => {
 export const Header = () => {
   const { targetNetwork } = useTargetNetwork();
   const isLocalNetwork = targetNetwork.id === hardhat.id;
+  const { isCreator, creator } = useCurrentCreator();
 
   const burgerMenuRef = useRef<HTMLDetailsElement>(null);
   useOutsideClick(burgerMenuRef, () => {
     burgerMenuRef?.current?.removeAttribute("open");
   });
+
+  // Get the profile link
+  const profileLink = isCreator && creator?.username ? `/creator/${creator.username}` : "/profile/create";
 
   return (
     <div className="sticky top-0 navbar bg-base-100 min-h-0 shrink-0 justify-between z-20 border-b border-[--fo-border] px-0 sm:px-2">
@@ -152,9 +188,35 @@ export const Header = () => {
         </ul>
       </div>
       <div className="navbar-end grow mr-4 gap-2">
-        <Link href="/create" className="btn btn-circle btn-ghost hover:bg-[--fo-primary-light]" title="Create Post">
-          <PlusCircleIcon className="h-6 w-6 text-[--fo-primary]" />
-        </Link>
+        {/* Create Post - only show for creators */}
+        {isCreator && (
+          <Link href="/create" className="btn btn-circle btn-ghost hover:bg-[--fo-primary-light]" title="Create Post">
+            <PlusCircleIcon className="h-6 w-6 text-[--fo-primary]" />
+          </Link>
+        )}
+
+        {/* Creator Avatar (mobile) */}
+        {isCreator && creator && (
+          <Link href={profileLink} className="lg:hidden" title={`@${creator.username}`}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-0.5">
+              {creator.profileImageCID ? (
+                <Image
+                  src={getIpfsUrl(creator.profileImageCID)}
+                  alt={creator.displayName}
+                  width={32}
+                  height={32}
+                  className="w-full h-full rounded-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-xs font-bold text-[--fo-primary]">
+                  {creator.displayName?.charAt(0) || "?"}
+                </div>
+              )}
+            </div>
+          </Link>
+        )}
+
         <RainbowKitCustomConnectButton />
         {isLocalNetwork && <FaucetButton />}
       </div>
