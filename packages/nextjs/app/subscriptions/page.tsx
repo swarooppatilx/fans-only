@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { NextPage } from "next";
@@ -14,80 +14,123 @@ import {
   ExclamationTriangleIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
-import { getIPFSUrl } from "~~/services/ipfs";
+import {
+  Creator,
+  Subscription,
+  SubscriptionTier,
+  getIpfsUrl,
+  useAllCreators,
+  useCreator,
+  useRenewSubscription,
+  useSubscription,
+} from "~~/hooks/fansonly/useCreatorProfile";
 
-// Mock subscription data - will be replaced with contract reads
+// Mock subscriptions for demo when no real data
 const mockSubscriptions = [
   {
+    creatorAddress: "0x1234567890123456789012345678901234567890",
     creator: {
-      address: "0x1234567890123456789012345678901234567890" as `0x${string}`,
       username: "cryptoartist",
       displayName: "Crypto Artist",
       profileImageCID: "",
       isVerified: true,
     },
     tier: {
-      id: 1,
       name: "Supporter",
-      price: BigInt("50000000000000000"), // 0.05 ETH
+      price: BigInt("50000000000000000"),
       description: "Exclusive content and early access",
     },
-    startTime: BigInt(Math.floor(Date.now() / 1000) - 86400 * 15), // 15 days ago
-    endTime: BigInt(Math.floor(Date.now() / 1000) + 86400 * 15), // 15 days left
-    isActive: true,
+    subscription: {
+      tierId: BigInt(1),
+      startTime: BigInt(Math.floor(Date.now() / 1000) - 86400 * 15),
+      endTime: BigInt(Math.floor(Date.now() / 1000) + 86400 * 15),
+      isActive: true,
+    },
   },
   {
+    creatorAddress: "0x2345678901234567890123456789012345678901",
     creator: {
-      address: "0x2345678901234567890123456789012345678901" as `0x${string}`,
       username: "defi_guru",
       displayName: "DeFi Guru",
       profileImageCID: "",
       isVerified: true,
     },
     tier: {
-      id: 0,
       name: "Fan",
-      price: BigInt("10000000000000000"), // 0.01 ETH
+      price: BigInt("10000000000000000"),
       description: "Basic subscriber access",
     },
-    startTime: BigInt(Math.floor(Date.now() / 1000) - 86400 * 25), // 25 days ago
-    endTime: BigInt(Math.floor(Date.now() / 1000) + 86400 * 5), // 5 days left (expiring soon)
-    isActive: true,
-  },
-  {
-    creator: {
-      address: "0x3456789012345678901234567890123456789012" as `0x${string}`,
-      username: "web3_dev",
-      displayName: "Web3 Developer",
-      profileImageCID: "",
-      isVerified: false,
+    subscription: {
+      tierId: BigInt(0),
+      startTime: BigInt(Math.floor(Date.now() / 1000) - 86400 * 25),
+      endTime: BigInt(Math.floor(Date.now() / 1000) + 86400 * 5),
+      isActive: true,
     },
-    tier: {
-      id: 1,
-      name: "Premium",
-      price: BigInt("100000000000000000"), // 0.1 ETH
-      description: "Full access to all tutorials",
-    },
-    startTime: BigInt(Math.floor(Date.now() / 1000) - 86400 * 35), // 35 days ago
-    endTime: BigInt(Math.floor(Date.now() / 1000) - 86400 * 5), // Expired 5 days ago
-    isActive: false,
   },
 ];
 
-interface SubscriptionCardProps {
-  subscription: (typeof mockSubscriptions)[0];
-  onRenew: () => void;
-  isRenewing: boolean;
+// Type for subscription with creator data
+interface SubscriptionWithCreator {
+  creatorAddress: string;
+  creator: {
+    username: string;
+    displayName: string;
+    profileImageCID: string;
+    isVerified: boolean;
+  };
+  tier: {
+    name: string;
+    price: bigint;
+    description: string;
+  };
+  subscription: {
+    tierId: bigint;
+    startTime: bigint;
+    endTime: bigint;
+    isActive: boolean;
+  };
 }
 
-const SubscriptionCard = ({ subscription, onRenew, isRenewing }: SubscriptionCardProps) => {
-  const { creator, tier, startTime, endTime, isActive } = subscription;
+// Fetcher component for subscription data
+function SubscriptionDataFetcher({
+  creatorAddress,
+  onDataLoaded,
+}: {
+  creatorAddress: string;
+  onDataLoaded: (
+    creatorAddress: string,
+    isSubscribed: boolean,
+    subscription: Subscription | undefined,
+    creator: Creator | undefined,
+    tiers: SubscriptionTier[],
+  ) => void;
+}) {
+  const { isSubscribed, subscription, isLoading: isLoadingSub } = useSubscription(creatorAddress);
+  const { creator, tiers, isLoading: isLoadingCreator } = useCreator(creatorAddress);
+
+  useEffect(() => {
+    if (!isLoadingSub && !isLoadingCreator) {
+      onDataLoaded(creatorAddress, isSubscribed, subscription, creator, tiers);
+    }
+  }, [isSubscribed, subscription, creator, tiers, isLoadingSub, isLoadingCreator, creatorAddress, onDataLoaded]);
+
+  return null;
+}
+
+interface SubscriptionCardProps {
+  data: SubscriptionWithCreator;
+  onRenew: () => void;
+  isRenewing: boolean;
+  isDemo?: boolean;
+}
+
+const SubscriptionCard = ({ data, onRenew, isRenewing, isDemo = false }: SubscriptionCardProps) => {
+  const { creator, tier, subscription } = data;
 
   const now = BigInt(Math.floor(Date.now() / 1000));
-  const daysLeft = isActive ? Math.ceil(Number(endTime - now) / 86400) : 0;
-  const isExpiringSoon = isActive && daysLeft <= 7;
-  const isExpired = !isActive || endTime < now;
+  const daysLeft = subscription.isActive ? Math.ceil(Number(subscription.endTime - now) / 86400) : 0;
+  const isExpiringSoon = subscription.isActive && daysLeft <= 7 && daysLeft > 0;
+  const isExpired = !subscription.isActive || subscription.endTime < now;
 
   const formatDate = (timestamp: bigint) => {
     return new Date(Number(timestamp) * 1000).toLocaleDateString("en-US", {
@@ -99,19 +142,26 @@ const SubscriptionCard = ({ subscription, onRenew, isRenewing }: SubscriptionCar
 
   return (
     <div
-      className={`fo-card p-4 ${isExpired ? "opacity-60" : ""} ${isExpiringSoon && !isExpired ? "ring-2 ring-[--fo-warning]" : ""}`}
+      className={`fo-card p-4 relative ${isExpired ? "opacity-60" : ""} ${isExpiringSoon && !isExpired ? "ring-2 ring-[--fo-warning]" : ""}`}
     >
+      {isDemo && (
+        <div className="absolute top-2 right-2 bg-warning/20 text-warning text-xs px-2 py-0.5 rounded-full z-10">
+          Demo
+        </div>
+      )}
+
       <div className="flex gap-4">
         {/* Creator Avatar */}
         <Link href={`/creator/${creator.username}`}>
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-0.5 flex-shrink-0">
             {creator.profileImageCID ? (
               <Image
-                src={getIPFSUrl(creator.profileImageCID)}
+                src={getIpfsUrl(creator.profileImageCID)}
                 alt={creator.displayName}
                 width={64}
                 height={64}
                 className="w-full h-full rounded-full object-cover"
+                unoptimized
               />
             ) : (
               <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-xl font-bold text-[--fo-primary]">
@@ -161,13 +211,13 @@ const SubscriptionCard = ({ subscription, onRenew, isRenewing }: SubscriptionCar
           <div className="mt-3 flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-1 text-[--fo-text-secondary]">
               <CalendarDaysIcon className="w-4 h-4" />
-              <span>Started {formatDate(startTime)}</span>
+              <span>Started {formatDate(subscription.startTime)}</span>
             </div>
             <div
               className={`flex items-center gap-1 ${isExpired ? "text-[--fo-text-muted]" : isExpiringSoon ? "text-[--fo-warning]" : "text-[--fo-text-secondary]"}`}
             >
               <ClockIcon className="w-4 h-4" />
-              <span>{isExpired ? `Expired ${formatDate(endTime)}` : `${daysLeft} days left`}</span>
+              <span>{isExpired ? `Expired ${formatDate(subscription.endTime)}` : `${daysLeft} days left`}</span>
             </div>
           </div>
         </div>
@@ -180,49 +230,127 @@ const SubscriptionCard = ({ subscription, onRenew, isRenewing }: SubscriptionCar
         </Link>
         <button
           onClick={onRenew}
-          disabled={isRenewing}
-          className={`flex-1 text-sm py-2 rounded-full font-semibold transition-colors ${
+          disabled={isRenewing || isDemo}
+          className={`flex-1 text-sm py-2 rounded-full font-semibold transition-colors disabled:opacity-50 ${
             isExpired
               ? "bg-[--fo-primary] text-white hover:bg-[--fo-primary-hover]"
               : "bg-base-200 text-base-content hover:bg-base-300"
           }`}
         >
-          {isRenewing ? "Processing..." : isExpired ? "Resubscribe" : "Renew Early"}
+          {isRenewing ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="loading loading-spinner loading-xs"></span>
+              Processing...
+            </span>
+          ) : isExpired ? (
+            "Resubscribe"
+          ) : (
+            "Renew Early"
+          )}
         </button>
       </div>
     </div>
   );
 };
 
+// Loading skeleton
+const SubscriptionSkeleton = () => (
+  <div className="fo-card p-4 animate-pulse">
+    <div className="flex gap-4">
+      <div className="w-16 h-16 rounded-full bg-base-300"></div>
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-base-300 rounded w-32"></div>
+        <div className="h-3 bg-base-300 rounded w-24"></div>
+        <div className="h-12 bg-base-300 rounded mt-2"></div>
+      </div>
+    </div>
+  </div>
+);
+
 const SubscriptionsPage: NextPage = () => {
-  const { address: connectedAddress, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const [activeTab, setActiveTab] = useState<"active" | "expired">("active");
-  const [renewingId, setRenewingId] = useState<string | null>(null);
+  const [subscriptionsMap, setSubscriptionsMap] = useState<Map<string, SubscriptionWithCreator>>(new Map());
+  const [renewingAddress, setRenewingAddress] = useState<string | null>(null);
 
-  // Contract interaction
-  const { writeContractAsync: renewSubscription, isPending: isRenewing } = useScaffoldWriteContract("CreatorProfile");
+  // Get all creator addresses to check subscriptions
+  const { creatorAddresses, isLoading: isLoadingCreators } = useAllCreators(0, 100);
 
-  const handleRenew = async (creatorAddress: `0x${string}`, tierId: number, price: bigint) => {
-    if (!connectedAddress) return;
+  // Renew subscription hook
+  const { renewSubscription, isPending: isRenewing } = useRenewSubscription();
 
-    setRenewingId(`${creatorAddress}-${tierId}`);
+  // Callback for subscription data
+  const handleDataLoaded = useCallback(
+    (
+      creatorAddress: string,
+      isSubscribed: boolean,
+      subscription: Subscription | undefined,
+      creator: Creator | undefined,
+      tiers: SubscriptionTier[],
+    ) => {
+      if (isSubscribed && subscription && creator) {
+        const tierData = tiers[Number(subscription.tierId)] || { name: "Tier", price: BigInt(0), description: "" };
+
+        setSubscriptionsMap(prev => {
+          const next = new Map(prev);
+          next.set(creatorAddress, {
+            creatorAddress,
+            creator: {
+              username: creator.username,
+              displayName: creator.displayName,
+              profileImageCID: creator.profileImageCID,
+              isVerified: creator.isVerified,
+            },
+            tier: {
+              name: tierData.name,
+              price: tierData.price,
+              description: tierData.description,
+            },
+            subscription: {
+              tierId: subscription.tierId,
+              startTime: subscription.startTime,
+              endTime: subscription.endTime,
+              isActive: subscription.isActive,
+            },
+          });
+          return next;
+        });
+      }
+    },
+    [],
+  );
+
+  // Handle renew
+  const handleRenew = async (creatorAddress: string, price: bigint) => {
+    setRenewingAddress(creatorAddress);
     try {
-      await renewSubscription({
-        functionName: "renewSubscription",
-        args: [creatorAddress],
-        value: price,
-      });
+      await renewSubscription(creatorAddress as `0x${string}`, price);
     } catch (error) {
       console.error("Renewal failed:", error);
     } finally {
-      setRenewingId(null);
+      setRenewingAddress(null);
     }
   };
 
-  const activeSubscriptions = mockSubscriptions.filter(s => s.isActive);
-  const expiredSubscriptions = mockSubscriptions.filter(s => !s.isActive);
+  // Process subscriptions
+  const allSubscriptions = useMemo(() => Array.from(subscriptionsMap.values()), [subscriptionsMap]);
 
-  const totalMonthlySpend = activeSubscriptions.reduce((sum, s) => sum + s.tier.price, BigInt(0));
+  const now = BigInt(Math.floor(Date.now() / 1000));
+  const activeSubscriptions = allSubscriptions.filter(s => s.subscription.isActive && s.subscription.endTime > now);
+  const expiredSubscriptions = allSubscriptions.filter(s => !s.subscription.isActive || s.subscription.endTime <= now);
+
+  // Show demo data if no real subscriptions
+  const hasRealSubscriptions = allSubscriptions.length > 0;
+  const displayActive = hasRealSubscriptions ? activeSubscriptions : mockSubscriptions;
+  const displayExpired = hasRealSubscriptions ? expiredSubscriptions : [];
+  const isDemo = !hasRealSubscriptions;
+
+  const totalMonthlySpend = (hasRealSubscriptions ? activeSubscriptions : mockSubscriptions).reduce(
+    (sum, s) => sum + s.tier.price,
+    BigInt(0),
+  );
+
+  const isLoading = isLoadingCreators;
 
   if (!isConnected) {
     return (
@@ -238,12 +366,27 @@ const SubscriptionsPage: NextPage = () => {
 
   return (
     <div className="min-h-screen py-8 px-4">
+      {/* Hidden data fetchers */}
+      {creatorAddresses.map(address => (
+        <SubscriptionDataFetcher key={address} creatorAddress={address} onDataLoaded={handleDataLoaded} />
+      ))}
+
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">My Subscriptions</h1>
           <p className="text-[--fo-text-secondary]">Manage your creator subscriptions</p>
         </div>
+
+        {/* Demo Mode Banner */}
+        {isDemo && !isLoading && (
+          <div className="bg-info/10 border border-info/30 rounded-lg p-4 mb-6">
+            <p className="text-sm text-info">
+              <strong>Demo Mode:</strong> Showing sample subscriptions. Your real subscriptions will appear here once
+              you subscribe to creators.
+            </p>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -253,7 +396,7 @@ const SubscriptionsPage: NextPage = () => {
                 <UserGroupIcon className="w-5 h-5 text-[--fo-primary]" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{activeSubscriptions.length}</div>
+                <div className="text-2xl font-bold">{displayActive.length}</div>
                 <div className="text-sm text-[--fo-text-muted]">Active Subscriptions</div>
               </div>
             </div>
@@ -272,9 +415,9 @@ const SubscriptionsPage: NextPage = () => {
         </div>
 
         {/* Expiring Soon Warning */}
-        {activeSubscriptions.some(s => {
-          const daysLeft = Math.ceil(Number(s.endTime - BigInt(Math.floor(Date.now() / 1000))) / 86400);
-          return daysLeft <= 7;
+        {displayActive.some(s => {
+          const daysLeft = Math.ceil(Number(s.subscription.endTime - now) / 86400);
+          return daysLeft <= 7 && daysLeft > 0;
         }) && (
           <div className="mb-6 p-4 bg-[--fo-warning]/10 border border-[--fo-warning] rounded-lg flex items-start gap-3">
             <ExclamationTriangleIcon className="w-5 h-5 text-[--fo-warning] flex-shrink-0 mt-0.5" />
@@ -298,7 +441,7 @@ const SubscriptionsPage: NextPage = () => {
                   : "text-[--fo-text-muted] border-transparent hover:text-base-content"
               }`}
             >
-              Active ({activeSubscriptions.length})
+              Active ({displayActive.length})
             </button>
             <button
               onClick={() => setActiveTab("expired")}
@@ -308,61 +451,72 @@ const SubscriptionsPage: NextPage = () => {
                   : "text-[--fo-text-muted] border-transparent hover:text-base-content"
               }`}
             >
-              Expired ({expiredSubscriptions.length})
+              Expired ({displayExpired.length})
             </button>
           </div>
         </div>
 
-        {/* Subscription List */}
-        {activeTab === "active" && (
+        {/* Loading State */}
+        {isLoading ? (
           <div className="space-y-4">
-            {activeSubscriptions.length > 0 ? (
-              activeSubscriptions.map((subscription, index) => (
-                <SubscriptionCard
-                  key={index}
-                  subscription={subscription}
-                  onRenew={() =>
-                    handleRenew(subscription.creator.address, subscription.tier.id, subscription.tier.price)
-                  }
-                  isRenewing={renewingId === `${subscription.creator.address}-${subscription.tier.id}` && isRenewing}
-                />
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <UserGroupIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
-                <h3 className="text-xl font-semibold mb-2">No Active Subscriptions</h3>
-                <p className="text-[--fo-text-secondary] mb-6">
-                  Discover amazing creators and support them with subscriptions
-                </p>
-                <Link href="/explore" className="fo-btn-primary inline-block">
-                  Explore Creators
-                </Link>
+            <SubscriptionSkeleton />
+            <SubscriptionSkeleton />
+          </div>
+        ) : (
+          <>
+            {/* Active Subscriptions */}
+            {activeTab === "active" && (
+              <div className="space-y-4">
+                {displayActive.length > 0 ? (
+                  displayActive.map(data => (
+                    <SubscriptionCard
+                      key={data.creatorAddress}
+                      data={data}
+                      onRenew={() => handleRenew(data.creatorAddress, data.tier.price)}
+                      isRenewing={renewingAddress === data.creatorAddress && isRenewing}
+                      isDemo={isDemo}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <UserGroupIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
+                    <h3 className="text-xl font-semibold mb-2">No Active Subscriptions</h3>
+                    <p className="text-[--fo-text-secondary] mb-6">
+                      Discover amazing creators and support them with subscriptions
+                    </p>
+                    <Link href="/explore" className="fo-btn-primary inline-block">
+                      Explore Creators
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {activeTab === "expired" && (
-          <div className="space-y-4">
-            {expiredSubscriptions.length > 0 ? (
-              expiredSubscriptions.map((subscription, index) => (
-                <SubscriptionCard
-                  key={index}
-                  subscription={subscription}
-                  onRenew={() =>
-                    handleRenew(subscription.creator.address, subscription.tier.id, subscription.tier.price)
-                  }
-                  isRenewing={renewingId === `${subscription.creator.address}-${subscription.tier.id}` && isRenewing}
-                />
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <CalendarDaysIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
-                <h3 className="text-xl font-semibold mb-2">No Expired Subscriptions</h3>
-                <p className="text-[--fo-text-secondary]">All your subscriptions are active!</p>
+            {/* Expired Subscriptions */}
+            {activeTab === "expired" && (
+              <div className="space-y-4">
+                {displayExpired.length > 0 ? (
+                  displayExpired.map(data => (
+                    <SubscriptionCard
+                      key={data.creatorAddress}
+                      data={data}
+                      onRenew={() => handleRenew(data.creatorAddress, data.tier.price)}
+                      isRenewing={renewingAddress === data.creatorAddress && isRenewing}
+                      isDemo={isDemo}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <CalendarDaysIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
+                    <h3 className="text-xl font-semibold mb-2">No Expired Subscriptions</h3>
+                    <p className="text-[--fo-text-secondary]">
+                      {isDemo ? "Sample data shown - no expired subscriptions" : "All your subscriptions are active!"}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
