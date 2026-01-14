@@ -7,7 +7,9 @@ import { RevealBurnerPKModal } from "./RevealBurnerPKModal";
 import { WrongNetworkDropdown } from "./WrongNetworkDropdown";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Balance } from "@scaffold-ui/components";
+import { Wallet } from "lucide-react";
 import { Address } from "viem";
+import { FaucetButton } from "~~/components/scaffold-eth/FaucetButton";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
@@ -32,8 +34,13 @@ export const RainbowKitCustomConnectButton = () => {
             {(() => {
               if (!connected) {
                 return (
-                  <button className="btn btn-primary btn-sm" onClick={openConnectModal} type="button">
-                    Connect Wallet
+                  <button
+                    className="group flex items-center justify-center gap-2 w-full py-3 px-4 bg-[#00aff0] hover:bg-[#009bd6] text-white font-bold rounded-full transition-all duration-200 hover:shadow-lg hover:shadow-[#00aff0]/25 active:scale-[0.98]"
+                    onClick={openConnectModal}
+                    type="button"
+                  >
+                    <Wallet size={20} className="transition-transform group-hover:scale-110" />
+                    <span className="hidden xl:inline">Connect Wallet</span>
                   </button>
                 );
               }
@@ -43,19 +50,26 @@ export const RainbowKitCustomConnectButton = () => {
               }
 
               return (
-                <>
-                  <div className="flex flex-col items-center mr-2">
-                    <Balance
-                      address={account.address as Address}
-                      style={{
-                        minHeight: "0",
-                        height: "auto",
-                        fontSize: "0.8em",
-                      }}
-                    />
-                    <span className="text-xs" style={{ color: networkColor }}>
-                      {chain.name}
-                    </span>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="hidden xl:flex items-center gap-2">
+                    <FaucetButton />
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1.5">
+                        <Balance
+                          address={account.address as Address}
+                          style={{
+                            minHeight: "0",
+                            height: "auto",
+                            fontSize: "0.875rem",
+                            fontWeight: "600",
+                            color: "#f8fafc",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium" style={{ color: networkColor }}>
+                        {chain.name}
+                      </span>
+                    </div>
                   </div>
                   <AddressInfoDropdown
                     address={account.address as Address}
@@ -65,7 +79,7 @@ export const RainbowKitCustomConnectButton = () => {
                   />
                   <AddressQRCodeModal address={account.address as Address} modalId="qrcode-modal" />
                   <RevealBurnerPKModal />
-                </>
+                </div>
               );
             })()}
           </>

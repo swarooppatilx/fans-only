@@ -165,11 +165,8 @@ export const Header = () => {
         </details>
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 ml-4 mr-6 shrink-0">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-r from-fo-primary to-fo-accent flex items-center justify-center">
-            <span className="text-white font-bold text-lg">F</span>
-          </div>
-          <span className="hidden sm:block font-bold text-xl fo-gradient-text">FansOnly</span>
+        <Link href="/" className="flex items-center ml-4 mr-6 shrink-0">
+          <img src="/textlogo_white.svg" alt="FansOnly" className="h-8" />
         </Link>
       </div>
 
@@ -193,7 +190,7 @@ export const Header = () => {
         {/* Mobile profile avatar - creators only */}
         {isConnected && isCreator && creator && (
           <Link href={profileLink} className="lg:hidden">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-fo-primary to-fo-accent p-0.5">
+            <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 overflow-hidden">
               {creator.profileImageCID ? (
                 <Image
                   src={getIpfsUrl(creator.profileImageCID)}

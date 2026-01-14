@@ -4,6 +4,7 @@ import { getAddress } from "viem";
 import { Address } from "viem";
 import { useAccount, useDisconnect } from "wagmi";
 import {
+  ArrowLeftIcon,
   ArrowLeftOnRectangleIcon,
   ArrowTopRightOnSquareIcon,
   ArrowsRightLeftIcon,
@@ -53,81 +54,113 @@ export const AddressInfoDropdown = ({
 
   return (
     <>
-      <details ref={dropdownRef} className="dropdown dropdown-end leading-3">
-        <summary className="btn btn-secondary btn-sm pl-0 pr-2 shadow-md dropdown-toggle gap-0 h-auto!">
-          <BlockieAvatar address={checkSumAddress} size={30} ensImage={ensAvatar} />
-          <span className="ml-2 mr-1">
+      <details ref={dropdownRef} className="dropdown dropdown-top dropdown-end leading-3">
+        <summary className="group flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-full cursor-pointer transition-all duration-200 hover:shadow-lg list-none">
+          <BlockieAvatar address={checkSumAddress} size={28} ensImage={ensAvatar} />
+          <span className="hidden xl:inline text-sm font-medium text-slate-200">
             {isENS(displayName) ? displayName : checkSumAddress?.slice(0, 6) + "..." + checkSumAddress?.slice(-4)}
           </span>
-          <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0" />
+          <ChevronDownIcon className="h-4 w-4 text-slate-400 transition-transform duration-200 group-open:rotate-180" />
         </summary>
-        <ul className="dropdown-content menu z-2 p-2 mt-2 shadow-center shadow-accent bg-base-200 rounded-box gap-1">
+        <ul className="dropdown-content menu z-[100] p-2 bottom-full mb-2 right-0 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl shadow-black/40 min-w-[220px]">
+          {/* Back button when selecting network */}
+          {selectingNetwork && (
+            <li>
+              <button
+                className="flex items-center gap-3 px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors mb-1"
+                onClick={() => setSelectingNetwork(false)}
+              >
+                <ArrowLeftIcon className="h-5 w-5" />
+                <span className="text-sm font-medium">Back</span>
+              </button>
+            </li>
+          )}
+
           <NetworkOptions hidden={!selectingNetwork} />
+
+          {/* Copy Address */}
           <li className={selectingNetwork ? "hidden" : ""}>
-            <div
-              className="h-8 btn-sm rounded-xl! flex gap-3 py-3 cursor-pointer"
+            <button
+              className="flex items-center gap-3 px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors"
               onClick={() => copyAddressToClipboard(checkSumAddress)}
             >
               {isAddressCopiedToClipboard ? (
                 <>
-                  <CheckCircleIcon className="text-xl font-normal h-6 w-4 ml-2 sm:ml-0" aria-hidden="true" />
-                  <span className="whitespace-nowrap">Copied!</span>
+                  <CheckCircleIcon className="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                  <span className="text-sm font-medium text-emerald-500">Copied!</span>
                 </>
               ) : (
                 <>
-                  <DocumentDuplicateIcon className="text-xl font-normal h-6 w-4 ml-2 sm:ml-0" aria-hidden="true" />
-                  <span className="whitespace-nowrap">Copy address</span>
+                  <DocumentDuplicateIcon className="h-5 w-5" aria-hidden="true" />
+                  <span className="text-sm font-medium">Copy address</span>
                 </>
               )}
-            </div>
-          </li>
-          <li className={selectingNetwork ? "hidden" : ""}>
-            <label htmlFor="qrcode-modal" className="h-8 btn-sm rounded-xl! flex gap-3 py-3">
-              <QrCodeIcon className="h-6 w-4 ml-2 sm:ml-0" />
-              <span className="whitespace-nowrap">View QR Code</span>
-            </label>
-          </li>
-          <li className={selectingNetwork ? "hidden" : ""}>
-            <button className="h-8 btn-sm rounded-xl! flex gap-3 py-3" type="button">
-              <ArrowTopRightOnSquareIcon className="h-6 w-4 ml-2 sm:ml-0" />
-              <a
-                target="_blank"
-                href={blockExplorerAddressLink}
-                rel="noopener noreferrer"
-                className="whitespace-nowrap"
-              >
-                View on Block Explorer
-              </a>
             </button>
           </li>
-          {allowedNetworks.length > 1 ? (
+
+          {/* QR Code */}
+          <li className={selectingNetwork ? "hidden" : ""}>
+            <label
+              htmlFor="qrcode-modal"
+              className="flex items-center gap-3 px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors cursor-pointer"
+            >
+              <QrCodeIcon className="h-5 w-5" />
+              <span className="text-sm font-medium">View QR Code</span>
+            </label>
+          </li>
+
+          {/* Block Explorer */}
+          <li className={selectingNetwork ? "hidden" : ""}>
+            <a
+              href={blockExplorerAddressLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors"
+            >
+              <ArrowTopRightOnSquareIcon className="h-5 w-5" />
+              <span className="text-sm font-medium">View on Explorer</span>
+            </a>
+          </li>
+
+          {/* Switch Network - Always show if more than 1 network available */}
+          {allowedNetworks.length > 1 && (
             <li className={selectingNetwork ? "hidden" : ""}>
               <button
-                className="h-8 btn-sm rounded-xl! flex gap-3 py-3"
+                className="flex items-center gap-3 px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl transition-colors"
                 type="button"
-                onClick={() => {
-                  setSelectingNetwork(true);
-                }}
+                onClick={() => setSelectingNetwork(true)}
               >
-                <ArrowsRightLeftIcon className="h-6 w-4 ml-2 sm:ml-0" /> <span>Switch Network</span>
+                <ArrowsRightLeftIcon className="h-5 w-5" />
+                <span className="text-sm font-medium">Switch Network</span>
               </button>
             </li>
-          ) : null}
-          {connector?.id === BURNER_WALLET_ID ? (
-            <li>
-              <label htmlFor="reveal-burner-pk-modal" className="h-8 btn-sm rounded-xl! flex gap-3 py-3 text-error">
-                <EyeIcon className="h-6 w-4 ml-2 sm:ml-0" />
-                <span>Reveal Private Key</span>
+          )}
+
+          {/* Reveal PK (Burner only) */}
+          {connector?.id === BURNER_WALLET_ID && (
+            <li className={selectingNetwork ? "hidden" : ""}>
+              <label
+                htmlFor="reveal-burner-pk-modal"
+                className="flex items-center gap-3 px-3 py-2.5 text-amber-500 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              >
+                <EyeIcon className="h-5 w-5" />
+                <span className="text-sm font-medium">Reveal Private Key</span>
               </label>
             </li>
-          ) : null}
+          )}
+
+          {/* Divider */}
+          <div className={`my-1 border-t border-slate-700 ${selectingNetwork ? "hidden" : ""}`} />
+
+          {/* Disconnect */}
           <li className={selectingNetwork ? "hidden" : ""}>
             <button
-              className="menu-item text-error h-8 btn-sm rounded-xl! flex gap-3 py-3"
+              className="flex items-center gap-3 px-3 py-2.5 text-red-400 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-colors"
               type="button"
               onClick={() => disconnect()}
             >
-              <ArrowLeftOnRectangleIcon className="h-6 w-4 ml-2 sm:ml-0" /> <span>Disconnect</span>
+              <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+              <span className="text-sm font-medium">Disconnect</span>
             </button>
           </li>
         </ul>

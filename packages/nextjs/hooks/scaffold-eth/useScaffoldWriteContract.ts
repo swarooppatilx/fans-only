@@ -135,7 +135,10 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
               >
             | undefined,
         );
-      const writeTxResult = await writeTx(makeWriteWithParams, { blockConfirmations, onBlockConfirmation });
+      const writeTxResult = await writeTx(makeWriteWithParams, {
+        blockConfirmations,
+        onBlockConfirmation,
+      });
 
       return writeTxResult;
     } catch (e: any) {
@@ -186,6 +189,7 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
   return {
     ...wagmiContractWrite,
     isMining,
+    reset: wagmiContractWrite.reset,
     // Overwrite wagmi's writeContactAsync
     writeContractAsync: sendContractWriteAsyncTx,
     // Overwrite wagmi's writeContract

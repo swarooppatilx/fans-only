@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><style>
+    #light-icon {
+      display: inline;
+    }
+    #dark-icon {
+      display: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #light-icon {
+        display: none;
+      }
+      #dark-icon {
+        display: inline;
+      }
+    }
+  </style><g id="light-icon"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><g><g transform="matrix(3.597122302158273,0,0,3.597122302158273,0,151.0791366906475)"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="278" height="194"><svg width="278" height="194" viewBox="0 0 278 194" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M76.641 5C100.415 5 122 25.2405 122 25.2405L96.9744 128C48.1744 125.509 29.7179 88.557 26.5897 70.3924H84.4615C62.5641 69.3544 15.0154 54.8228 0 5H76.641Z" fill="#05AEEE"></path>
+<path d="M181 0C234.572 0 278 43.4284 278 97C278 150.572 234.572 194 181 194C127.428 194 84 150.572 84 97C84 43.4284 127.428 0 181 0ZM181 65C163.327 65 149 79.3269 149 97C149 114.673 163.327 129 181 129C198.673 129 213 114.673 213 97C213 79.3269 198.673 65 181 65Z" fill="#018BCC"></path>
+</svg></svg></g></g></svg></g><g id="dark-icon"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="1000" height="1000"><g><g transform="matrix(3.597122302158273,0,0,3.597122302158273,0,151.0791366906475)"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="278" height="194"><svg width="278" height="194" viewBox="0 0 278 194" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M76.641 5C100.415 5 122 25.2405 122 25.2405L96.9744 128C48.1744 125.509 29.7179 88.557 26.5897 70.3924H84.4615C62.5641 69.3544 15.0154 54.8228 0 5H76.641Z" fill="#CCEFFC"></path>
+<path d="M181 0C234.572 0 278 43.4284 278 97C278 150.572 234.572 194 181 194C127.428 194 84 150.572 84 97C84 43.4284 127.428 0 181 0ZM181 65C163.327 65 149 79.3269 149 97C149 114.673 163.327 129 181 129C198.673 129 213 114.673 213 97C213 79.3269 198.673 65 181 65Z" fill="white"></path>
+</svg></svg></g></g></svg></g></svg>

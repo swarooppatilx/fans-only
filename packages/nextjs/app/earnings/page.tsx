@@ -229,7 +229,7 @@ const EarningsPage: NextPage = () => {
         </div>
 
         {/* Earnings Info */}
-        <div className="mt-8 fo-card p-6 bg-gradient-to-r from-[--fo-primary]/5 to-[--fo-accent]/5">
+        <div className="mt-8 fo-card p-6 bg-slate-800/50 border border-slate-700">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold mb-1">Your Earnings</h2>

@@ -125,7 +125,7 @@ const PostCard = ({
     <div className="fo-post-card">
       {/* Header */}
       <div className="fo-post-header">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-0.5">
+        <div className="w-10 h-10 rounded-full bg-slate-700 border border-slate-600 overflow-hidden">
           {profileImageCID ? (
             <Image
               src={getIpfsUrl(profileImageCID)}
@@ -162,7 +162,7 @@ const PostCard = ({
       {post.contentType !== 0 && (
         <div className="relative">
           {canView ? (
-            <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
+            <div className="fo-post-media bg-slate-800 flex items-center justify-center">
               {contentCID ? (
                 <Image src={getIpfsUrl(contentCID)} alt="" fill className="object-cover" unoptimized />
               ) : (
@@ -171,7 +171,7 @@ const PostCard = ({
             </div>
           ) : (
             <div className="fo-post-media relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-base-300 to-base-200" />
+              <div className="absolute inset-0 bg-slate-800" />
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
                 <div className="w-16 h-16 rounded-full bg-base-100/80 flex items-center justify-center">
                   <LockClosedIcon className="w-8 h-8 text-[--fo-primary]" />
@@ -299,7 +299,7 @@ const CreatorProfilePage: NextPage = () => {
   return (
     <div className="min-h-screen">
       {/* Banner */}
-      <div className="h-48 md:h-64 bg-gradient-to-r from-[--fo-primary] to-[--fo-accent] relative overflow-hidden">
+      <div className="h-48 md:h-64 bg-slate-800 relative overflow-hidden">
         {creator.bannerImageCID && (
           <Image src={getIpfsUrl(creator.bannerImageCID)} alt="" fill className="object-cover" unoptimized />
         )}
@@ -311,7 +311,7 @@ const CreatorProfilePage: NextPage = () => {
         <div className="flex flex-col md:flex-row md:items-end gap-4">
           {/* Avatar */}
           <div className="-mt-16 md:-mt-20">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-1 ring-4 ring-base-100 overflow-hidden">
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-slate-700 border-4 border-slate-900 ring-4 ring-base-100 overflow-hidden">
               {creator.profileImageCID ? (
                 <Image
                   src={getIpfsUrl(creator.profileImageCID)}

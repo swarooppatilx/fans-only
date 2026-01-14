@@ -146,10 +146,10 @@ const CreatePostPage: NextPage = () => {
   // Loading creator status
   if (isLoadingCreator) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900">
         <div className="text-center">
-          <div className="loading loading-spinner loading-lg text-[--fo-primary]"></div>
-          <p className="mt-4 text-[--fo-text-muted]">Loading...</p>
+          <div className="w-8 h-8 border-2 border-[#00aff0] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-slate-500">Loading...</p>
         </div>
       </div>
     );
@@ -158,11 +158,11 @@ const CreatePostPage: NextPage = () => {
   // Not connected
   if (!isConnected) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="fo-card p-8 text-center max-w-md">
-          <PhotoIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
-          <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
-          <p className="text-[--fo-text-secondary]">Please connect your wallet to create posts</p>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center max-w-md">
+          <PhotoIcon className="w-16 h-16 mx-auto mb-4 text-slate-500" />
+          <h2 className="text-2xl font-bold mb-2 text-slate-100">Connect Your Wallet</h2>
+          <p className="text-slate-400">Please connect your wallet to create posts</p>
         </div>
       </div>
     );
@@ -171,12 +171,15 @@ const CreatePostPage: NextPage = () => {
   // Not a creator
   if (!isCreator) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="fo-card p-8 text-center max-w-md">
-          <LockClosedIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
-          <h2 className="text-2xl font-bold mb-2">Become a Creator</h2>
-          <p className="text-[--fo-text-secondary] mb-6">You need to create a creator profile before posting content</p>
-          <button onClick={() => router.push("/profile/create")} className="fo-btn-primary">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center max-w-md">
+          <LockClosedIcon className="w-16 h-16 mx-auto mb-4 text-slate-500" />
+          <h2 className="text-2xl font-bold mb-2 text-slate-100">Become a Creator</h2>
+          <p className="text-slate-400 mb-6">You need to create a creator profile before posting content</p>
+          <button
+            onClick={() => router.push("/profile/create")}
+            className="px-6 py-3 bg-[#00aff0] hover:bg-[#009bd6] text-white font-semibold rounded-full transition-all"
+          >
             Create Profile
           </button>
         </div>
@@ -187,44 +190,47 @@ const CreatePostPage: NextPage = () => {
   // Success state
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="fo-card p-8 text-center max-w-md">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[--fo-success]/20 flex items-center justify-center">
-            <CheckCircleIcon className="w-10 h-10 text-[--fo-success]" />
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <CheckCircleIcon className="w-10 h-10 text-emerald-500" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Post Published!</h2>
-          <p className="text-[--fo-text-secondary] mb-4">Your post is now live on your profile.</p>
-          <div className="loading loading-spinner loading-sm text-[--fo-primary]"></div>
-          <p className="text-sm text-[--fo-text-muted] mt-2">Redirecting to your profile...</p>
+          <h2 className="text-2xl font-bold mb-2 text-slate-100">Post Published!</h2>
+          <p className="text-slate-400 mb-4">Your post is now live on your profile.</p>
+          <div className="w-6 h-6 border-2 border-[#00aff0] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm text-slate-500 mt-2">Redirecting to your profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-8 px-4 bg-slate-900">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Create Post</h1>
-          <button onClick={() => router.back()} className="p-2 hover:bg-base-200 rounded-full">
+          <h1 className="text-2xl font-bold text-slate-100">Create Post</h1>
+          <button
+            onClick={() => router.back()}
+            className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-200 transition-colors"
+          >
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="fo-card p-6">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
           {/* Caption */}
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Caption</label>
+            <label className="block text-sm font-medium mb-2 text-slate-300">Caption</label>
             <textarea
               value={caption}
               onChange={e => setCaption(e.target.value)}
               placeholder="What's on your mind?"
-              className="fo-textarea"
+              className="w-full bg-slate-700 border border-slate-600 rounded-xl py-3 px-4 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-[#00aff0] focus:ring-1 focus:ring-[#00aff0]/20 transition-all resize-none"
               rows={4}
               maxLength={1000}
             />
-            <div className="text-right text-sm text-[--fo-text-muted] mt-1">{caption.length}/1000</div>
+            <div className="text-right text-sm text-slate-500 mt-1">{caption.length}/1000</div>
           </div>
 
           {/* Media Upload */}
@@ -251,7 +257,7 @@ const CreatePostPage: NextPage = () => {
 
           {/* Manual CID Input (fallback) */}
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-slate-300">
               {contentType === "TEXT" ? "Content CID (optional)" : "Or paste IPFS CID manually"}
             </label>
             <input
@@ -259,22 +265,22 @@ const CreatePostPage: NextPage = () => {
               value={contentCID}
               onChange={e => setContentCID(e.target.value)}
               placeholder="Qm... or bafk..."
-              className="fo-input"
+              className="w-full bg-slate-700 border border-slate-600 rounded-xl py-3 px-4 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-[#00aff0] focus:ring-1 focus:ring-[#00aff0]/20 transition-all"
             />
           </div>
 
           {/* Content Type */}
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Content Type</label>
+            <label className="block text-sm font-medium mb-2 text-slate-300">Content Type</label>
             <div className="grid grid-cols-5 gap-2">
               {contentTypeOptions.map(option => (
                 <button
                   key={option.value}
                   onClick={() => setContentType(option.value)}
-                  className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${
                     contentType === option.value
-                      ? "border-[--fo-primary] bg-[--fo-primary]/10 text-[--fo-primary]"
-                      : "border-[--fo-border] hover:border-[--fo-border-light]"
+                      ? "border-[#00aff0] bg-[#00aff0]/10 text-[#00aff0]"
+                      : "border-slate-600 hover:border-slate-500 text-slate-400"
                   }`}
                 >
                   <option.icon className="w-5 h-5" />
@@ -286,28 +292,28 @@ const CreatePostPage: NextPage = () => {
 
           {/* Access Level */}
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Who can see this?</label>
+            <label className="block text-sm font-medium mb-2 text-slate-300">Who can see this?</label>
             <div className="space-y-2">
               {accessLevelOptions.map(option => (
                 <button
                   key={option.value}
                   onClick={() => setAccessLevel(option.value)}
-                  className={`w-full p-4 rounded-lg border flex items-center gap-4 transition-all text-left ${
+                  className={`w-full p-4 rounded-xl border flex items-center gap-4 transition-all text-left ${
                     accessLevel === option.value
-                      ? "border-[--fo-primary] bg-[--fo-primary]/10"
-                      : "border-[--fo-border] hover:border-[--fo-border-light]"
+                      ? "border-[#00aff0] bg-[#00aff0]/10"
+                      : "border-slate-600 hover:border-slate-500"
                   }`}
                 >
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      accessLevel === option.value ? "bg-[--fo-primary] text-white" : "bg-base-200"
+                      accessLevel === option.value ? "bg-[#00aff0] text-white" : "bg-slate-700 text-slate-400"
                     }`}
                   >
                     <option.icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-medium">{option.label}</div>
-                    <div className="text-sm text-[--fo-text-muted]">{option.description}</div>
+                    <div className="font-medium text-slate-100">{option.label}</div>
+                    <div className="text-sm text-slate-500">{option.description}</div>
                   </div>
                 </button>
               ))}
@@ -317,20 +323,20 @@ const CreatePostPage: NextPage = () => {
           {/* Tier Selection (for tier-gated posts) */}
           {accessLevel === "TIER_GATED" && creatorTiers && creatorTiers.length > 0 && (
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Required Tier</label>
+              <label className="block text-sm font-medium mb-2 text-slate-300">Required Tier</label>
               <div className="space-y-2">
                 {creatorTiers.map((tier, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedTier(index)}
-                    className={`w-full p-3 rounded-lg border flex items-center justify-between transition-all ${
+                    className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all ${
                       selectedTier === index
-                        ? "border-[--fo-primary] bg-[--fo-primary]/10"
-                        : "border-[--fo-border] hover:border-[--fo-border-light]"
+                        ? "border-[#00aff0] bg-[#00aff0]/10"
+                        : "border-slate-600 hover:border-slate-500"
                     }`}
                   >
-                    <span className="font-medium">{tier.name}</span>
-                    <span className="text-[--fo-text-muted]">{(Number(tier.price) / 1e18).toFixed(4)} MNT</span>
+                    <span className="font-medium text-slate-100">{tier.name}</span>
+                    <span className="text-slate-400">{(Number(tier.price) / 1e18).toFixed(4)} MNT</span>
                   </button>
                 ))}
               </div>
@@ -340,28 +346,31 @@ const CreatePostPage: NextPage = () => {
           {/* Preview Toggle */}
           {caption && (
             <div className="mb-6">
-              <button onClick={() => setIsPreview(!isPreview)} className="text-[--fo-primary] text-sm font-medium">
+              <button
+                onClick={() => setIsPreview(!isPreview)}
+                className="text-[#00aff0] text-sm font-medium hover:text-[#009bd6] transition-colors"
+              >
                 {isPreview ? "Hide Preview" : "Show Preview"}
               </button>
 
               {isPreview && (
-                <div className="mt-4 fo-post-card">
-                  <div className="fo-post-header">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-0.5">
-                      <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-sm font-bold text-[--fo-primary]">
+                <div className="mt-4 bg-slate-700 border border-slate-600 rounded-2xl overflow-hidden">
+                  <div className="p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-600 border border-slate-500">
+                      <div className="w-full h-full rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-[#00aff0]">
                         {creatorProfile?.displayName?.charAt(0) || "?"}
                       </div>
                     </div>
                     <div>
-                      <div className="font-semibold">{creatorProfile?.displayName}</div>
-                      <div className="text-sm text-[--fo-text-muted]">Just now</div>
+                      <div className="font-semibold text-slate-100">{creatorProfile?.displayName}</div>
+                      <div className="text-sm text-slate-500">Just now</div>
                     </div>
                   </div>
-                  <div className="fo-post-content">
-                    <p>{caption}</p>
+                  <div className="px-4 pb-3">
+                    <p className="text-slate-200">{caption}</p>
                   </div>
                   {contentCID && contentType !== "TEXT" && (
-                    <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
+                    <div className="aspect-video bg-slate-800 flex items-center justify-center">
                       {contentType === "IMAGE" ? (
                         <Image
                           src={`https://ipfs.io/ipfs/${contentCID}`}
@@ -372,11 +381,11 @@ const CreatePostPage: NextPage = () => {
                           unoptimized
                         />
                       ) : (
-                        <PhotoIcon className="w-12 h-12 text-[--fo-text-muted]" />
+                        <PhotoIcon className="w-12 h-12 text-slate-500" />
                       )}
                     </div>
                   )}
-                  <div className="p-3 border-t border-[--fo-border] flex items-center gap-2 text-sm text-[--fo-text-muted]">
+                  <div className="p-3 border-t border-slate-600 flex items-center gap-2 text-sm text-slate-500">
                     {accessLevel === "PUBLIC" && (
                       <>
                         <GlobeAltIcon className="w-4 h-4" />
@@ -403,21 +412,25 @@ const CreatePostPage: NextPage = () => {
 
           {/* Error Message */}
           {(errorMessage || createError) && (
-            <div className="mb-4 p-4 bg-[--fo-error]/10 border border-[--fo-error] rounded-lg text-[--fo-error] text-sm">
+            <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-xl text-red-400 text-sm">
               {errorMessage || createError?.message || "An error occurred"}
             </div>
           )}
 
           {/* Submit Button */}
-          <button onClick={handleSubmit} disabled={isPublishDisabled} className="fo-btn-primary w-full">
+          <button
+            onClick={handleSubmit}
+            disabled={isPublishDisabled}
+            className="w-full py-4 px-6 bg-[#00aff0] hover:bg-[#009bd6] disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold rounded-full transition-all shadow-lg shadow-[#00aff0]/30 hover:shadow-[#00aff0]/50 disabled:shadow-none"
+          >
             {isCreating ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="loading loading-spinner loading-sm"></span>
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                 Publishing...
               </span>
             ) : isUploading ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="loading loading-spinner loading-sm"></span>
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                 Uploading...
               </span>
             ) : (

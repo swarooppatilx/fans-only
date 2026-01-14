@@ -44,9 +44,13 @@ export function getIpfsUrl(cid: string): string {
  * Hook to get the current user's creator profile
  */
 export function useCurrentCreator() {
-  const { address } = useAccount();
+  const { address, isConnecting } = useAccount();
 
-  const { data: isCreator, isLoading: isLoadingStatus } = useScaffoldReadContract({
+  const {
+    data: isCreator,
+    isLoading: isLoadingStatus,
+    isFetched: isFetchedStatus,
+  } = useScaffoldReadContract({
     contractName: "CreatorProfile",
     functionName: "isCreator",
     args: [address],
@@ -55,6 +59,7 @@ export function useCurrentCreator() {
   const {
     data: creator,
     isLoading: isLoadingProfile,
+    isFetched: isFetchedProfile,
     refetch,
   } = useScaffoldReadContract({
     contractName: "CreatorProfile",
@@ -62,10 +67,14 @@ export function useCurrentCreator() {
     args: [address],
   });
 
+  // Consider loading if: connecting, no address yet, queries are loading, or data not yet fetched
+  const isLoading =
+    isConnecting || !address || isLoadingStatus || isLoadingProfile || !isFetchedStatus || !isFetchedProfile;
+
   return {
     isCreator: isCreator ?? false,
     creator: creator as Creator | undefined,
-    isLoading: isLoadingStatus || isLoadingProfile,
+    isLoading,
     refetch,
     address,
   };
@@ -224,7 +233,7 @@ export function useRegisterCreator() {
  * Hook for updating creator profile
  */
 export function useUpdateProfile() {
-  const { writeContractAsync, isPending, isSuccess, error } = useScaffoldWriteContract({
+  const { writeContractAsync, isPending, isSuccess, error, reset } = useScaffoldWriteContract({
     contractName: "CreatorProfile",
   });
 
@@ -240,6 +249,7 @@ export function useUpdateProfile() {
     isPending,
     isSuccess,
     error,
+    reset,
   };
 }
 

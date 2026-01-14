@@ -2,71 +2,39 @@
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
-
 @theme {
   --shadow-center: 0 0 12px -2px rgb(0 0 0 / 0.05);
   --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
-  /* FansOnly Design System */
+  /* FansOnly Design System - Web3 Dark Theme */
   --fo-primary: #00aff0;
-  --fo-primary-hover: #0095cc;
+  --fo-primary-hover: #009bd6;
   --fo-primary-light: rgba(0, 175, 240, 0.1);
-  --fo-secondary: #1a1a2e;
+  --fo-secondary: #7c3aed;
   --fo-accent: #7c3aed;
   --fo-success: #10b981;
   --fo-warning: #f59e0b;
   --fo-error: #ef4444;
 
-  /* Dark theme colors */
-  --fo-bg-primary: #0a0a0f;
-  --fo-bg-secondary: #121218;
-  --fo-bg-card: #1a1a24;
-  --fo-bg-elevated: #222230;
+  /* Slate-based dark theme colors */
+  --fo-bg-primary: #0f172a;
+  --fo-bg-secondary: #1e293b;
+  --fo-bg-card: #1e293b;
+  --fo-bg-elevated: #334155;
 
   /* Text colors */
-  --fo-text-primary: #ffffff;
-  --fo-text-secondary: #a1a1aa;
-  --fo-text-muted: #71717a;
+  --fo-text-primary: #f8fafc;
+  --fo-text-secondary: #94a3b8;
+  --fo-text-muted: #64748b;
 
   /* Border colors */
-  --fo-border: #2a2a3a;
-  --fo-border-light: #3a3a4a;
-
-  /* Gradients */
-  --fo-gradient-primary: linear-gradient(135deg, #00aff0 0%, #7c3aed 100%);
-  --fo-gradient-card: linear-gradient(180deg, rgba(0, 175, 240, 0.05) 0%, transparent 100%);
+  --fo-border: #334155;
+  --fo-border-light: #475569;
 }
 
 @plugin "daisyui" {
   themes:
-    light,
     dark --prefersdark;
-}
-
-@plugin "daisyui/theme" {
-  name: "light";
-
-  --color-primary: #00aff0;
-  --color-primary-content: #ffffff;
-  --color-secondary: #7c3aed;
-  --color-secondary-content: #ffffff;
-  --color-accent: #00aff0;
-  --color-accent-content: #ffffff;
-  --color-neutral: #1a1a2e;
-  --color-neutral-content: #ffffff;
-  --color-base-100: #ffffff;
-  --color-base-200: #f8fafc;
-  --color-base-300: #e2e8f0;
-  --color-base-content: #1a1a2e;
-  --color-info: #00aff0;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-
-  --radius-field: 9999rem;
-  --radius-box: 1rem;
-  --tt-tailw: 6px;
 }
 
 @plugin "daisyui/theme" {
@@ -78,12 +46,12 @@
   --color-secondary-content: #ffffff;
   --color-accent: #00aff0;
   --color-accent-content: #ffffff;
-  --color-neutral: #ffffff;
-  --color-neutral-content: #1a1a2e;
-  --color-base-100: #1a1a24;
-  --color-base-200: #121218;
-  --color-base-300: #0a0a0f;
-  --color-base-content: #ffffff;
+  --color-neutral: #f8fafc;
+  --color-neutral-content: #0f172a;
+  --color-base-100: #1e293b;
+  --color-base-200: #0f172a;
+  --color-base-300: #020617;
+  --color-base-content: #f8fafc;
   --color-info: #00aff0;
   --color-success: #10b981;
   --color-warning: #f59e0b;
@@ -105,6 +73,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
   *,
   ::after,
   ::before,
@@ -132,7 +101,13 @@
 
 :root,
 [data-theme] {
-  background: var(--color-base-200);
+  background: #0f172a;
+}
+
+/* Slate-900 base background */
+body {
+  background-color: #0f172a;
+  color: #f8fafc;
 }
 
 /* FansOnly Component Styles */
@@ -145,11 +120,13 @@
   transition: all 0.2s;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
+
 .fo-btn-primary:hover {
   background-color: var(--fo-primary-hover);
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
   transform: scale(1.02);
 }
+
 .fo-btn-primary:active {
   transform: scale(0.98);
 }
@@ -163,6 +140,7 @@
   border-radius: 9999px;
   transition: all 0.2s;
 }
+
 .fo-btn-secondary:hover {
   background-color: var(--fo-primary-light);
 }
@@ -179,6 +157,7 @@
   transition: all 0.2s;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
+
 .fo-btn-subscribe:hover {
   background-color: var(--fo-primary-hover);
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -199,6 +178,7 @@
   overflow: hidden;
   transition: all 0.2s;
 }
+
 .fo-card-elevated:hover {
   border-color: var(--fo-border-light);
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -263,9 +243,11 @@
   color: var(--color-base-content);
   transition: all 0.2s;
 }
+
 .fo-input::placeholder {
   color: var(--fo-text-muted);
 }
+
 .fo-input:focus {
   outline: none;
   border-color: var(--fo-primary);
@@ -283,9 +265,11 @@
   resize: none;
   min-height: 100px;
 }
+
 .fo-textarea::placeholder {
   color: var(--fo-text-muted);
 }
+
 .fo-textarea:focus {
   outline: none;
   border-color: var(--fo-primary);
@@ -309,6 +293,7 @@
   margin-left: 0;
   min-height: 100vh;
 }
+
 @media (min-width: 1024px) {
   .fo-main-content {
     margin-left: 16rem;
@@ -364,6 +349,7 @@
   transition: color 0.2s;
   cursor: pointer;
 }
+
 .fo-post-action:hover {
   color: var(--fo-primary);
 }
@@ -390,9 +376,11 @@
   transition: all 0.2s;
   cursor: pointer;
 }
+
 .fo-tier-card:hover {
   border-color: var(--fo-primary);
 }
+
 .fo-tier-card.selected {
   border-color: var(--fo-primary);
   background-color: var(--fo-primary-light);
@@ -403,6 +391,7 @@
   height: 12rem;
   object-fit: cover;
 }
+
 @media (min-width: 768px) {
   .fo-profile-banner {
     height: 16rem;
@@ -414,6 +403,7 @@
   margin-top: -4rem;
   padding: 0 1rem;
 }
+
 @media (min-width: 768px) {
   .fo-profile-header {
     margin-top: -5rem;
@@ -446,10 +436,12 @@
   border-radius: 0.75rem;
   transition: all 0.2s;
 }
+
 .fo-nav-link:hover {
   background-color: var(--color-base-200);
   opacity: 1;
 }
+
 .fo-nav-link.active {
   background-color: var(--fo-primary-light);
   color: var(--fo-primary);
@@ -458,10 +450,7 @@
 }
 
 .fo-gradient-text {
-  background: linear-gradient(to right, var(--fo-primary), var(--fo-accent));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--fo-primary);
 }
 
 .fo-glow {
@@ -482,4 +471,91 @@
 
 .link:hover {
   opacity: 80%;
+}
+
+/* Dropdown animations */
+@keyframes fadeInSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeInSlideDown 0.2s ease-out;
+}
+
+/* RainbowKit Modal Customizations */
+[data-rk] {
+  --rk-colors-accentColor: #00aff0 !important;
+  --rk-colors-modalBackground: #0f172a !important;
+}
+
+/* RainbowKit button hover effects */
+[data-rk] button {
+  transition: all 0.2s ease !important;
+}
+
+[data-rk] button:hover {
+  transform: scale(1.02);
+}
+
+[data-rk] button:active {
+  transform: scale(0.98);
+}
+
+/* RainbowKit modal animations */
+[data-rk] [role="dialog"] {
+  animation: fadeInSlideDown 0.25s ease-out;
+}
+
+/* Wallet option hover states */
+[data-rk] [data-testid^="rk-wallet-option"] {
+  transition: all 0.15s ease !important;
+  border-radius: 12px !important;
+}
+
+[data-rk] [data-testid^="rk-wallet-option"]:hover {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* Connected wallet button styling */
+[data-rk] [data-testid="rk-connect-button"] {
+  font-weight: 600 !important;
+  border-radius: 9999px !important;
+}
+
+/* Modal close button */
+[data-rk] [aria-label="Close"] {
+  transition: all 0.15s ease !important;
+}
+
+[data-rk] [aria-label="Close"]:hover {
+  background-color: #334155 !important;
+  transform: scale(1.1);
+}
+
+/* Smooth scrollbar for dropdowns */
+.dropdown-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-content::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+.dropdown-content::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.dropdown-content::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
