@@ -56,16 +56,21 @@ export const FaucetButton = () => {
     <div
       className={
         !isBalanceZero
-          ? "ml-1"
-          : "ml-1 tooltip tooltip-bottom tooltip-primary tooltip-open font-bold before:left-auto before:transform-none before:content-[attr(data-tip)] before:-translate-x-2/5"
+          ? ""
+          : "tooltip tooltip-bottom tooltip-primary tooltip-open font-bold before:left-auto before:transform-none before:content-[attr(data-tip)] before:-translate-x-2/5"
       }
       data-tip="Grab funds from faucet"
     >
-      <button className="btn btn-secondary btn-sm px-2 rounded-full" onClick={sendETH} disabled={loading}>
+      <button
+        className="flex items-center justify-center p-1.5 bg-slate-800 hover:bg-slate-700 text-[#00aff0] rounded-full transition-all duration-200 hover:shadow-lg hover:shadow-[#00aff0]/10 active:scale-95 disabled:opacity-50"
+        onClick={sendETH}
+        disabled={loading}
+        title="Get test ETH"
+      >
         {!loading ? (
           <BanknotesIcon className="h-4 w-4" />
         ) : (
-          <span className="loading loading-spinner loading-xs"></span>
+          <span className="loading loading-spinner loading-xs text-[#00aff0]"></span>
         )}
       </button>
     </div>

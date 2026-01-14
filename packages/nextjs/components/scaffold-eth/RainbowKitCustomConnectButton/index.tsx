@@ -9,6 +9,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Balance } from "@scaffold-ui/components";
 import { Wallet } from "lucide-react";
 import { Address } from "viem";
+import { FaucetButton } from "~~/components/scaffold-eth/FaucetButton";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
@@ -50,20 +51,25 @@ export const RainbowKitCustomConnectButton = () => {
 
               return (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="hidden xl:flex flex-col items-end ml-1">
-                    <Balance
-                      address={account.address as Address}
-                      style={{
-                        minHeight: "0",
-                        height: "auto",
-                        fontSize: "0.875rem",
-                        fontWeight: "600",
-                        color: "#f8fafc",
-                      }}
-                    />
-                    <span className="text-xs font-medium" style={{ color: networkColor }}>
-                      {chain.name}
-                    </span>
+                  <div className="hidden xl:flex items-center gap-2">
+                    <FaucetButton />
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1.5">
+                        <Balance
+                          address={account.address as Address}
+                          style={{
+                            minHeight: "0",
+                            height: "auto",
+                            fontSize: "0.875rem",
+                            fontWeight: "600",
+                            color: "#f8fafc",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium" style={{ color: networkColor }}>
+                        {chain.name}
+                      </span>
+                    </div>
                   </div>
                   <AddressInfoDropdown
                     address={account.address as Address}
