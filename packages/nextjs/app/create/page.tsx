@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
@@ -61,7 +62,6 @@ const CreatePostPage: NextPage = () => {
   // Form state
   const [caption, setCaption] = useState("");
   const [contentCID, setContentCID] = useState("");
-  const [previewCID, setPreviewCID] = useState("");
   const [contentType, setContentType] = useState<ContentTypeOption>("TEXT");
   const [accessLevel, setAccessLevel] = useState<AccessLevelOption>("PUBLIC");
   const [selectedTier, setSelectedTier] = useState<number>(0);
@@ -69,7 +69,6 @@ const CreatePostPage: NextPage = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  const [isUploadingPreview, setIsUploadingPreview] = useState(false);
 
   // Custom hooks for contract interactions
   const { createPost, isPending: isCreating, error: createError } = useCreatePost();
@@ -79,8 +78,7 @@ const CreatePostPage: NextPage = () => {
   const { tiers: creatorTiers } = useCreator(connectedAddress);
 
   // Determine if publish should be disabled
-  const isPublishDisabled =
-    isCreating || isUploading || isUploadingPreview || (contentType !== "TEXT" && !contentCID.trim());
+  const isPublishDisabled = isCreating || isUploading || (contentType !== "TEXT" && !contentCID.trim());
 
   // Get enum values from options
   const getContentTypeEnum = (type: ContentTypeOption): ContentType => {
@@ -99,9 +97,11 @@ const CreatePostPage: NextPage = () => {
       return;
     }
 
-    // For non-TEXT posts, require a contentCID
+    // For non-TEXT posts, require a contentCID (image/video/audio/mixed), regardless of access level
     if (contentType !== "TEXT" && !contentCID.trim()) {
-      setErrorMessage("Please upload or paste content CID");
+      setErrorMessage(
+        "You must upload or paste a valid IPFS CID for your media (image, video, audio, or mixed) before publishing.",
+      );
       return;
     }
 
@@ -113,7 +113,6 @@ const CreatePostPage: NextPage = () => {
 
       await createPost(
         finalContentCID,
-        previewCID,
         caption,
         getContentTypeEnum(contentType),
         getAccessLevelEnum(accessLevel),
@@ -264,34 +263,6 @@ const CreatePostPage: NextPage = () => {
             />
           </div>
 
-          {/* Preview CID for locked content */}
-          {accessLevel !== "PUBLIC" && contentType !== "TEXT" && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Preview Image (optional)</label>
-              <p className="text-sm text-[--fo-text-muted] mb-2">
-                This image will be shown blurred to non-subscribers as a teaser.
-              </p>
-              <FileUpload
-                label=""
-                accept="image/*"
-                maxSizeMB={10}
-                onUpload={cid => setPreviewCID(cid)}
-                onUploadingChange={setIsUploadingPreview}
-                placeholder="Upload a preview/thumbnail image"
-              />
-              {previewCID && (
-                <input
-                  type="text"
-                  value={previewCID}
-                  onChange={e => setPreviewCID(e.target.value)}
-                  placeholder="Preview CID"
-                  className="fo-input mt-2"
-                  readOnly
-                />
-              )}
-            </div>
-          )}
-
           {/* Content Type */}
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Content Type</label>
@@ -391,7 +362,18 @@ const CreatePostPage: NextPage = () => {
                   </div>
                   {contentCID && contentType !== "TEXT" && (
                     <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
-                      <PhotoIcon className="w-12 h-12 text-[--fo-text-muted]" />
+                      {contentType === "IMAGE" ? (
+                        <Image
+                          src={`https://ipfs.io/ipfs/${contentCID}`}
+                          alt="Preview"
+                          width={320}
+                          height={320}
+                          className="object-contain max-h-80"
+                          unoptimized
+                        />
+                      ) : (
+                        <PhotoIcon className="w-12 h-12 text-[--fo-text-muted]" />
+                      )}
                     </div>
                   )}
                   <div className="p-3 border-t border-[--fo-border] flex items-center gap-2 text-sm text-[--fo-text-muted]">
@@ -433,7 +415,7 @@ const CreatePostPage: NextPage = () => {
                 <span className="loading loading-spinner loading-sm"></span>
                 Publishing...
               </span>
-            ) : isUploading || isUploadingPreview ? (
+            ) : isUploading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="loading loading-spinner loading-sm"></span>
                 Uploading...

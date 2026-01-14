@@ -36,7 +36,6 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
         uint256 id;
         address creator;
         string contentCID; // IPFS CID for encrypted content
-        string previewCID; // IPFS CID for preview/thumbnail (public)
         string caption;
         ContentType contentType;
         AccessLevel accessLevel;
@@ -122,7 +121,6 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     /**
      * @notice Create a new post
      * @param _contentCID IPFS CID for the encrypted content
-     * @param _previewCID IPFS CID for public preview/thumbnail
      * @param _caption Post caption
      * @param _contentType Type of content
      * @param _accessLevel Access level for the post
@@ -130,7 +128,6 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      */
     function createPost(
         string calldata _contentCID,
-        string calldata _previewCID,
         string calldata _caption,
         ContentType _contentType,
         AccessLevel _accessLevel,
@@ -150,7 +147,6 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
             id: postId,
             creator: msg.sender,
             contentCID: _contentCID,
-            previewCID: _previewCID,
             caption: _caption,
             contentType: _contentType,
             accessLevel: _accessLevel,
@@ -167,12 +163,11 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Update a post's caption and preview
+     * @notice Update a post's caption
      * @param _postId Post ID to update
      * @param _caption New caption
-     * @param _previewCID New preview CID
      */
-    function updatePost(uint256 _postId, string calldata _caption, string calldata _previewCID)
+    function updatePost(uint256 _postId, string calldata _caption)
         external
         postExists(_postId)
         onlyPostOwner(_postId)
@@ -180,7 +175,6 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     {
         Post storage post = posts[_postId];
         post.caption = _caption;
-        post.previewCID = _previewCID;
 
         emit PostUpdated(_postId, msg.sender);
     }

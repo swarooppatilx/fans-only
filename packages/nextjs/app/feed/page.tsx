@@ -201,7 +201,7 @@ const PostCard = ({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
           ) : (
             <div className="fo-post-media relative">
               <div className="absolute inset-0 bg-gradient-to-br from-base-300 to-base-200" />
-              <div className="absolute inset-0 backdrop-blur-xl flex flex-col items-center justify-center gap-3 p-4">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
                 <div className="w-14 h-14 rounded-full bg-base-100/80 flex items-center justify-center">
                   <LockClosedIcon className="w-7 h-7 text-[--fo-primary]" />
                 </div>

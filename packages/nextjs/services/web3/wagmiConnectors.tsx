@@ -20,7 +20,7 @@ const wallets = [
   baseAccount,
   rainbowWallet,
   safeWallet,
-  ...(!targetNetworks.some(network => network.id !== (chains.hardhat as chains.Chain).id) || !onlyLocalBurnerWallet
+  ...(onlyLocalBurnerWallet && targetNetworks.some(network => network.id === (chains.hardhat as chains.Chain).id)
     ? [rainbowkitBurnerWallet]
     : []),
 ];

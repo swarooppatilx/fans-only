@@ -67,9 +67,34 @@ const PostCard = ({
   subscribedTierId: bigint;
 }) => {
   const [showComments, setShowComments] = useState(false);
+  // Fetch the post with the connected user's address for access control
+  const { post: userPost, canAccess } = usePost(post.id);
   const { hasLiked, refetch: refetchPost } = usePost(post.id);
   const { likePost, isPending: isLiking } = useLikePost();
   const { unlikePost, isPending: isUnliking } = useUnlikePost();
+
+  // Check if user can view this content
+  const canView =
+    post.accessLevel === AccessLevel.PUBLIC ||
+    (isSubscribed && post.accessLevel === AccessLevel.SUBSCRIBERS) ||
+    (isSubscribed && post.accessLevel === AccessLevel.TIER_GATED && subscribedTierId >= post.requiredTierId) ||
+    canAccess;
+
+  // Use the user's post data for contentCID if available and user can access
+  const contentCID = canView && userPost?.contentCID ? userPost.contentCID : post.contentCID;
+
+  // Debug log for troubleshooting image display
+  if (typeof window !== "undefined") {
+    console.log("[PostCard debug] post.id:", post.id.toString(), {
+      userPost,
+      canAccess,
+      isSubscribed,
+      post,
+      contentCID,
+      canView,
+      connectedAddress: typeof window !== "undefined" ? window.ethereum?.selectedAddress : undefined,
+    });
+  }
 
   const handleLikeToggle = async () => {
     try {
@@ -83,12 +108,6 @@ const PostCard = ({
       console.error("Failed to toggle like:", error);
     }
   };
-
-  // Check if user can view this content
-  const canView =
-    post.accessLevel === AccessLevel.PUBLIC ||
-    (isSubscribed && post.accessLevel === AccessLevel.SUBSCRIBERS) ||
-    (isSubscribed && post.accessLevel === AccessLevel.TIER_GATED && subscribedTierId >= post.requiredTierId);
 
   const formatDate = (timestamp: bigint) => {
     const date = new Date(Number(timestamp) * 1000);
@@ -144,8 +163,8 @@ const PostCard = ({
         <div className="relative">
           {canView ? (
             <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
-              {post.contentCID ? (
-                <Image src={getIpfsUrl(post.contentCID)} alt="" fill className="object-cover" unoptimized />
+              {contentCID ? (
+                <Image src={getIpfsUrl(contentCID)} alt="" fill className="object-cover" unoptimized />
               ) : (
                 <PhotoIcon className="w-16 h-16 text-[--fo-text-muted]" />
               )}
@@ -153,10 +172,7 @@ const PostCard = ({
           ) : (
             <div className="fo-post-media relative">
               <div className="absolute inset-0 bg-gradient-to-br from-base-300 to-base-200" />
-              {post.previewCID && (
-                <Image src={getIpfsUrl(post.previewCID)} alt="" fill className="object-cover blur-xl" unoptimized />
-              )}
-              <div className="absolute inset-0 backdrop-blur-xl flex flex-col items-center justify-center gap-3 p-4">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
                 <div className="w-16 h-16 rounded-full bg-base-100/80 flex items-center justify-center">
                   <LockClosedIcon className="w-8 h-8 text-[--fo-primary]" />
                 </div>
@@ -277,6 +293,7 @@ const CreatorProfilePage: NextPage = () => {
   }
 
   const activeTiers = tiers.filter(t => t.isActive);
+  // Show all active posts, including locked ones
   const activePosts = posts.filter(p => p.isActive);
 
   return (

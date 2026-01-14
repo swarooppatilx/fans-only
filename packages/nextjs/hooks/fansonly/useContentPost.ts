@@ -22,7 +22,6 @@ export interface Post {
   id: bigint;
   creator: string;
   contentCID: string;
-  previewCID: string;
   caption: string;
   contentType: ContentType;
   accessLevel: AccessLevel;
@@ -56,6 +55,7 @@ export function usePost(postId: bigint | undefined) {
     contractName: "ContentPost",
     functionName: "getPost",
     args: [postId],
+    account: address,
   });
 
   const { data: hasLiked } = useScaffoldReadContract({
@@ -161,7 +161,6 @@ export function useCreatePost() {
 
   const createPost = async (
     contentCID: string,
-    previewCID: string,
     caption: string,
     contentType: ContentType,
     accessLevel: AccessLevel,
@@ -169,7 +168,7 @@ export function useCreatePost() {
   ) => {
     return writeContractAsync({
       functionName: "createPost",
-      args: [contentCID, previewCID, caption, contentType, accessLevel, requiredTierId],
+      args: [contentCID, caption, contentType, accessLevel, requiredTierId],
     });
   };
 
@@ -189,10 +188,10 @@ export function useUpdatePost() {
     contractName: "ContentPost",
   });
 
-  const updatePost = async (postId: bigint, caption: string, previewCID: string) => {
+  const updatePost = async (postId: bigint, caption: string) => {
     return writeContractAsync({
       functionName: "updatePost",
-      args: [postId, caption, previewCID],
+      args: [postId, caption],
     });
   };
 

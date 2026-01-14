@@ -1264,11 +1264,6 @@ const deployedContracts = {
               internalType: "string",
             },
             {
-              name: "_previewCID",
-              type: "string",
-              internalType: "string",
-            },
-            {
               name: "_caption",
               type: "string",
               internalType: "string",
@@ -1454,11 +1449,6 @@ const deployedContracts = {
                   internalType: "string",
                 },
                 {
-                  name: "previewCID",
-                  type: "string",
-                  internalType: "string",
-                },
-                {
                   name: "caption",
                   type: "string",
                   internalType: "string",
@@ -1531,11 +1521,6 @@ const deployedContracts = {
                 },
                 {
                   name: "contentCID",
-                  type: "string",
-                  internalType: "string",
-                },
-                {
-                  name: "previewCID",
                   type: "string",
                   internalType: "string",
                 },
@@ -1835,11 +1820,6 @@ const deployedContracts = {
               internalType: "string",
             },
             {
-              name: "previewCID",
-              type: "string",
-              internalType: "string",
-            },
-            {
               name: "caption",
               type: "string",
               internalType: "string",
@@ -1933,11 +1913,6 @@ const deployedContracts = {
             },
             {
               name: "_caption",
-              type: "string",
-              internalType: "string",
-            },
-            {
-              name: "_previewCID",
               type: "string",
               internalType: "string",
             },
