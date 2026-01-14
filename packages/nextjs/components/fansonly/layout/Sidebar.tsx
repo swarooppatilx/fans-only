@@ -21,10 +21,7 @@ export default function Sidebar() {
       <div className="flex flex-col gap-6">
         {/* Logo */}
         <Link href="/" className="px-2 flex items-center">
-          <div className="h-10 w-10 bg-[#00aff0] rounded-xl flex items-center justify-center text-white">
-            <Feather size={24} />
-          </div>
-          <h1 className="hidden xl:block ml-3 text-2xl font-black text-slate-100 tracking-tight">FansOnly</h1>
+          <img src="/textlogo_white.svg" alt="FansOnly" className="h-10" />
         </Link>
 
         {/* Navigation */}

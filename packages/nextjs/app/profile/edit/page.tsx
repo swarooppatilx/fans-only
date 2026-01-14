@@ -9,9 +9,10 @@ import { useCurrentCreator, useUpdateProfile } from "~~/hooks/fansonly/useCreato
 
 const EditProfilePage: NextPage = () => {
   const router = useRouter();
-  const { isConnected } = useAccount();
+  const { isConnected, isConnecting } = useAccount();
   const { isCreator, creator, isLoading: isLoadingCreator, refetch } = useCurrentCreator();
-  const { updateProfile, isPending, isSuccess } = useUpdateProfile();
+  const { updateProfile, isPending, isSuccess, reset } = useUpdateProfile();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     displayName: "",
@@ -19,6 +20,12 @@ const EditProfilePage: NextPage = () => {
     profileImageCID: "",
     bannerImageCID: "",
   });
+
+  // Reset state on mount
+  useEffect(() => {
+    reset();
+    setShowSuccess(false);
+  }, [reset]);
 
   // Populate form with existing data
   useEffect(() => {
@@ -34,17 +41,19 @@ const EditProfilePage: NextPage = () => {
 
   // Handle successful update
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && !showSuccess) {
+      setShowSuccess(true);
       refetch();
     }
-  }, [isSuccess, refetch]);
+  }, [isSuccess, showSuccess, refetch]);
 
-  // Redirect if not a creator
+  // Redirect if not a creator - only after loading is completely done
   useEffect(() => {
-    if (!isLoadingCreator && !isCreator) {
+    // Only redirect if we're done loading AND confirmed not a creator
+    if (!isLoadingCreator && isConnected && !isCreator) {
       router.replace("/profile/create");
     }
-  }, [isLoadingCreator, isCreator, router]);
+  }, [isLoadingCreator, isConnected, isCreator, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +66,7 @@ const EditProfilePage: NextPage = () => {
     }
   };
 
-  if (!isConnected) {
+  if (!isConnected && !isConnecting) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="fo-card p-8 text-center max-w-md">
@@ -68,7 +77,7 @@ const EditProfilePage: NextPage = () => {
     );
   }
 
-  if (isLoadingCreator) {
+  if (isConnecting || isLoadingCreator) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <span className="loading loading-spinner loading-lg text-fo-primary"></span>
@@ -76,7 +85,7 @@ const EditProfilePage: NextPage = () => {
     );
   }
 
-  if (isSuccess) {
+  if (showSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="fo-card p-8 text-center max-w-md">

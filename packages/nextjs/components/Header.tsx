@@ -165,11 +165,8 @@ export const Header = () => {
         </details>
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 ml-4 mr-6 shrink-0">
-          <div className="w-9 h-9 rounded-full bg-[#00aff0] flex items-center justify-center">
-            <span className="text-white font-bold text-lg">F</span>
-          </div>
-          <span className="hidden sm:block font-bold text-xl text-[#00aff0]">FansOnly</span>
+        <Link href="/" className="flex items-center ml-4 mr-6 shrink-0">
+          <img src="/textlogo_white.svg" alt="FansOnly" className="h-8" />
         </Link>
       </div>
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   DollarSign,
   Heart,
@@ -17,6 +18,7 @@ import {
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { CheckBadgeIcon } from "@heroicons/react/24/outline";
+import { PostComments } from "~~/components/fansonly/PostComments";
 import {
   AccessLevel,
   ContentType,
@@ -113,8 +115,10 @@ interface PostCardProps {
 }
 
 function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUnlike }: PostCardProps) {
+  const router = useRouter();
   const [localLiked, setLocalLiked] = useState(hasLiked);
   const [localLikeCount, setLocalLikeCount] = useState(Number(post.likesCount));
+  const [showComments, setShowComments] = useState(false);
 
   // Fetch the post with the connected user's address for access control (profile logic)
   const { post: userPost, canAccess } = usePost(post.id);
@@ -150,6 +154,10 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
 
   const username = post.creatorData?.username || post.creator.slice(0, 8);
   const displayName = post.creatorData?.displayName || `Creator ${post.creator.slice(0, 6)}`;
+
+  const navigateToPost = () => {
+    router.push(`/post/${post.id.toString()}`);
+  };
 
   return (
     <div className="border-b border-slate-800 p-4 hover:bg-slate-900/50 transition-colors">
@@ -192,12 +200,20 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
             </button>
           </div>
 
-          {/* Text Body */}
-          <p className="mt-1 text-slate-200 whitespace-pre-wrap leading-relaxed">{post.caption}</p>
+          {/* Text Body - Clickable */}
+          <p
+            onClick={navigateToPost}
+            className="mt-1 text-slate-200 whitespace-pre-wrap leading-relaxed cursor-pointer"
+          >
+            {post.caption}
+          </p>
 
-          {/* Media / Locked Content */}
+          {/* Media / Locked Content - Clickable */}
           {post.contentType !== ContentType.TEXT && (
-            <div className="mt-3 relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+            <div
+              onClick={navigateToPost}
+              className="mt-3 relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 cursor-pointer"
+            >
               {canView && contentCID ? (
                 <Image
                   src={getIpfsUrl(contentCID)}
@@ -247,7 +263,10 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
               <span className="font-medium">{localLikeCount}</span>
             </button>
 
-            <button className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#00aff0] group">
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className={`flex items-center gap-2 text-sm group ${showComments ? "text-[#00aff0]" : "text-slate-500 hover:text-[#00aff0]"}`}
+            >
               <div className="p-2 rounded-full group-hover:bg-[#00aff0]/10 transition-colors">
                 <MessageCircle size={18} />
               </div>
@@ -267,6 +286,9 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
               </div>
             </button>
           </div>
+
+          {/* Comments Section */}
+          <PostComments postId={post.id} isExpanded={showComments} />
         </div>
       </div>
     </div>

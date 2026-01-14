@@ -2,8 +2,9 @@ import "@rainbow-me/rainbowkit/styles.css";
 import "@scaffold-ui/components/styles.css";
 import { Providers } from "~~/components/Providers";
 import { ThemeProvider } from "~~/components/ThemeProvider";
+import ConditionalMain from "~~/components/fansonly/layout/ConditionalMain";
+import ConditionalRightSidebar from "~~/components/fansonly/layout/ConditionalRightSidebar";
 import MobileBottomNav from "~~/components/fansonly/layout/MobileBottomNav";
-import RightSidebar from "~~/components/fansonly/layout/RightSidebar";
 import Sidebar from "~~/components/fansonly/layout/Sidebar";
 import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
@@ -16,6 +17,14 @@ export const metadata = getMetadata({
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html suppressHydrationWarning data-theme="dark">
+      <head>
+        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <meta name="apple-mobile-web-app-title" content="Fans Only" />
+        <link rel="manifest" href="/site.webmanifest" />
+      </head>
       <body className="bg-slate-900 text-slate-100">
         <ThemeProvider enableSystem>
           <Providers>
@@ -29,16 +38,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="flex-1 min-h-screen max-w-[600px] w-full border-x border-slate-800 bg-slate-900">
-                  {children}
-                </main>
+                <ConditionalMain>{children}</ConditionalMain>
 
-                {/* Right Sidebar - Hidden on smaller screens */}
-                <aside className="hidden lg:block w-[350px] shrink-0">
-                  <div className="fixed top-0 w-[350px] h-screen bg-slate-900 z-20">
-                    <RightSidebar />
-                  </div>
-                </aside>
+                {/* Right Sidebar - Hidden on smaller screens and messages page */}
+                <ConditionalRightSidebar />
               </div>
 
               {/* Mobile Bottom Nav */}

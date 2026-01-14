@@ -6,7 +6,7 @@ export const WrongNetworkDropdown = () => {
   const { disconnect } = useDisconnect();
 
   return (
-    <div className="dropdown dropdown-end">
+    <div className="dropdown dropdown-top dropdown-end">
       <label
         tabIndex={0}
         className="group flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/30 hover:border-red-500/50 rounded-full cursor-pointer transition-all duration-200"
@@ -17,7 +17,7 @@ export const WrongNetworkDropdown = () => {
       </label>
       <ul
         tabIndex={0}
-        className="dropdown-content menu z-50 p-2 mt-3 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl shadow-black/20 min-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200"
+        className="dropdown-content menu z-50 p-2 mb-3 bottom-full right-0 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl shadow-black/20 min-w-[200px] animate-in fade-in slide-in-from-bottom-2 duration-200"
       >
         <NetworkOptions />
 
