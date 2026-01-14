@@ -18,6 +18,7 @@ import {
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { CheckBadgeIcon } from "@heroicons/react/24/outline";
+import { InlinePostComposer } from "~~/components/fansonly/InlinePostComposer";
 import { PostComments } from "~~/components/fansonly/PostComments";
 import {
   AccessLevel,
@@ -352,6 +353,7 @@ const PostSkeleton = () => (
 
 const FeedPage: NextPage = () => {
   const { isConnected } = useAccount();
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<"all" | "subscribed">("all");
   const [allPosts, setAllPosts] = useState<Map<string, Post[]>>(new Map());
   const [creatorDataMap, setCreatorDataMap] = useState<Map<string, Creator>>(new Map());
@@ -500,69 +502,78 @@ const FeedPage: NextPage = () => {
         </div>
       </div>
 
-      {/* Posts */}
-      <div className="flex flex-col pb-20">
-        {/* Create Post CTA for Creators */}
-        {isConnected && isCreator && (
-          <Link href="/create" className="block border-b border-slate-800">
-            <div className="p-4 flex items-center gap-3 hover:bg-slate-900/50 transition-colors cursor-pointer">
-              <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-[#00aff0]">
-                {currentCreator?.displayName?.charAt(0) || "?"}
-              </div>
-              <span className="text-slate-500 flex-1">What&apos;s on your mind?</span>
-              <span className="px-4 py-2 bg-[#00aff0] hover:bg-[#009bd6] text-white text-sm font-semibold rounded-full transition-all">
-                Post
-              </span>
-            </div>
-          </Link>
-        )}
-
-        {/* Loading State */}
-        {isLoading ? (
-          <>
-            <PostSkeleton />
-            <PostSkeleton />
-            <PostSkeleton />
-          </>
-        ) : hasPosts ? (
-          <>
-            {filteredPosts.map(post => {
-              const subData = subscriptionMap.get(post.creator);
-              return (
-                <PostCardWithActions
-                  key={`${post.creator}-${post.id}`}
-                  post={post}
-                  isSubscribed={subData?.isSubscribed || false}
-                  subscribedTierId={subData?.subscription?.tierId ?? BigInt(0)}
-                  hasLiked={likedPostsSet.has(post.id.toString())}
+      {/* Inline Post Composer (like Twitter/X) */}
+      {isConnected && isCreator && (
+        <div className="border-b border-slate-800 bg-slate-900 px-4 pt-4 pb-2 sticky top-0 z-10">
+          <div className="flex gap-3">
+            <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden">
+              {currentCreator?.profileImageCID ? (
+                <Image
+                  src={getIpfsUrl(currentCreator.profileImageCID)}
+                  alt={currentCreator.displayName || "Creator"}
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 object-cover rounded-full"
+                  unoptimized
                 />
-              );
-            })}
-          </>
-        ) : (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
-              <ImageIcon className="w-10 h-10 text-slate-500" />
+              ) : (
+                <span className="text-lg font-bold text-[#00aff0]">
+                  {currentCreator?.displayName?.charAt(0) || "?"}
+                </span>
+              )}
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-slate-100">
-              {activeFilter === "subscribed" ? "No subscribed content yet" : "No posts yet"}
-            </h3>
-            <p className="text-slate-400 mb-6">
-              {activeFilter === "subscribed"
-                ? "Subscribe to creators to see their posts here"
-                : "Be the first to explore our creators"}
-            </p>
-            <Link
-              href="/explore"
-              className="px-6 py-3 bg-[#00aff0] hover:bg-[#009bd6] text-white font-semibold rounded-full transition-all duration-200 inline-block"
-            >
-              Explore Creators
-            </Link>
+            <div className="flex-1">
+              <InlinePostComposer onPostSuccess={() => router.refresh()} creator={currentCreator} />
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="p-12 text-center text-slate-600 text-sm">You&apos;ve reached the end of the internet 🚀</div>
-      </div>
+      {/* Loading State */}
+      {isLoading ? (
+        <>
+          <PostSkeleton />
+          <PostSkeleton />
+          <PostSkeleton />
+        </>
+      ) : hasPosts ? (
+        <>
+          {filteredPosts.map(post => {
+            const subData = subscriptionMap.get(post.creator);
+            return (
+              <PostCardWithActions
+                key={`${post.creator}-${post.id}`}
+                post={post}
+                isSubscribed={subData?.isSubscribed || false}
+                subscribedTierId={subData?.subscription?.tierId ?? BigInt(0)}
+                hasLiked={likedPostsSet.has(post.id.toString())}
+              />
+            );
+          })}
+        </>
+      ) : (
+        <div className="text-center py-16">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
+            <ImageIcon className="w-10 h-10 text-slate-500" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2 text-slate-100">
+            {activeFilter === "subscribed" ? "No subscribed content yet" : "No posts yet"}
+          </h3>
+          <p className="text-slate-400 mb-6">
+            {activeFilter === "subscribed"
+              ? "Subscribe to creators to see their posts here"
+              : "Be the first to explore our creators"}
+          </p>
+          <Link
+            href="/explore"
+            className="px-6 py-3 bg-[#00aff0] hover:bg-[#009bd6] text-white font-semibold rounded-full transition-all duration-200 inline-block"
+          >
+            Explore Creators
+          </Link>
+        </div>
+      )}
+
+      <div className="p-12 text-center text-slate-600 text-sm">You&apos;ve reached the end of the internet 🚀</div>
     </div>
   );
 };
