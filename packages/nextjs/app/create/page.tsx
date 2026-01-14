@@ -68,6 +68,8 @@ const CreatePostPage: NextPage = () => {
   const [isPreview, setIsPreview] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingPreview, setIsUploadingPreview] = useState(false);
 
   // Custom hooks for contract interactions
   const { createPost, isPending: isCreating, error: createError } = useCreatePost();
@@ -75,6 +77,10 @@ const CreatePostPage: NextPage = () => {
   // Get creator's profile and tiers
   const { isCreator, creator: creatorProfile, isLoading: isLoadingCreator } = useCurrentCreator();
   const { tiers: creatorTiers } = useCreator(connectedAddress);
+
+  // Determine if publish should be disabled
+  const isPublishDisabled =
+    isCreating || isUploading || isUploadingPreview || (contentType !== "TEXT" && !contentCID.trim());
 
   // Get enum values from options
   const getContentTypeEnum = (type: ContentTypeOption): ContentType => {
@@ -90,11 +96,6 @@ const CreatePostPage: NextPage = () => {
   const handleSubmit = async () => {
     if (!isConnected || !connectedAddress) {
       setErrorMessage("Please connect your wallet");
-      return;
-    }
-
-    if (!caption.trim()) {
-      setErrorMessage("Please add a caption");
       return;
     }
 
@@ -120,13 +121,26 @@ const CreatePostPage: NextPage = () => {
       );
 
       setIsSuccess(true);
-      // Wait a moment for user to see success, then redirect
+      // Wait for the block to be mined, then redirect
       setTimeout(() => {
         router.push(`/creator/${creatorProfile?.username}`);
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error("Failed to create post:", error);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to create post. Please try again.");
+      const errorMsg = error instanceof Error ? error.message : String(error);
+
+      // Parse common contract errors
+      if (errorMsg.includes("NotACreator")) {
+        setErrorMessage("You are not registered as a creator. Please create a profile first.");
+      } else if (errorMsg.includes("InvalidContent")) {
+        setErrorMessage("Invalid content. Please make sure you've provided valid content.");
+      } else if (errorMsg.includes("InvalidTier")) {
+        setErrorMessage("Invalid subscription tier selected.");
+      } else if (errorMsg.includes("reverted")) {
+        setErrorMessage("Transaction failed. Please make sure you have a creator profile.");
+      } else {
+        setErrorMessage(errorMsg);
+      }
     }
   };
 
@@ -230,6 +244,7 @@ const CreatePostPage: NextPage = () => {
                 }
                 maxSizeMB={contentType === "VIDEO" ? 100 : 50}
                 onUpload={cid => setContentCID(cid)}
+                onUploadingChange={setIsUploading}
                 placeholder={`Drag and drop your ${contentType.toLowerCase()} or click to upload`}
               />
             </div>
@@ -261,6 +276,7 @@ const CreatePostPage: NextPage = () => {
                 accept="image/*"
                 maxSizeMB={10}
                 onUpload={cid => setPreviewCID(cid)}
+                onUploadingChange={setIsUploadingPreview}
                 placeholder="Upload a preview/thumbnail image"
               />
               {previewCID && (
@@ -411,11 +427,16 @@ const CreatePostPage: NextPage = () => {
           )}
 
           {/* Submit Button */}
-          <button onClick={handleSubmit} disabled={isCreating || !caption.trim()} className="fo-btn-primary w-full">
+          <button onClick={handleSubmit} disabled={isPublishDisabled} className="fo-btn-primary w-full">
             {isCreating ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="loading loading-spinner loading-sm"></span>
                 Publishing...
+              </span>
+            ) : isUploading || isUploadingPreview ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="loading loading-spinner loading-sm"></span>
+                Uploading...
               </span>
             ) : (
               "Publish Post"

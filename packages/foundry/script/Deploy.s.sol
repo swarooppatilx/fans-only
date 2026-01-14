@@ -2,8 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "./DeployHelpers.s.sol";
-import { DeployYourContract } from "./DeployYourContract.s.sol";
-import { DeployCreatorProfile } from "./DeployCreatorProfile.s.sol";
+import "./DeployFansOnly.s.sol";
 
 /**
  * @notice Main deployment script for all contracts
@@ -13,14 +12,8 @@ import { DeployCreatorProfile } from "./DeployCreatorProfile.s.sol";
  */
 contract DeployScript is ScaffoldETHDeploy {
     function run() external {
-        // Deploys all your contracts sequentially
-        // Add new deployments here when needed
-
-        DeployYourContract deployYourContract = new DeployYourContract();
-        deployYourContract.run();
-
-        // Deploy CreatorProfile contract
-        DeployCreatorProfile deployCreatorProfile = new DeployCreatorProfile();
-        deployCreatorProfile.run();
+        // Deploy all FansOnly contracts (CreatorProfile + ContentPost)
+        DeployFansOnly deployFansOnly = new DeployFansOnly();
+        deployFansOnly.run();
     }
 }

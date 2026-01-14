@@ -16,6 +16,7 @@ import { getFileCategory, useIPFSUpload } from "~~/hooks/useIPFSUpload";
 
 interface FileUploadProps {
   onUpload: (cid: string, url: string) => void;
+  onUploadingChange?: (isUploading: boolean) => void;
   accept?: string;
   maxSizeMB?: number;
   label?: string;
@@ -26,6 +27,7 @@ interface FileUploadProps {
 
 export function FileUpload({
   onUpload,
+  onUploadingChange,
   accept = "image/*,video/*,audio/*",
   maxSizeMB = 50,
   label,
@@ -42,6 +44,7 @@ export function FileUpload({
     onSuccess: result => {
       setUploadedCid(result.cid);
       onUpload(result.cid, result.url);
+      onUploadingChange?.(false);
     },
   });
 
@@ -66,10 +69,13 @@ export function FileUpload({
         });
       }
 
+      // Notify parent that upload is starting
+      onUploadingChange?.(true);
+
       // Upload to IPFS
       await upload(file);
     },
-    [upload, showPreview],
+    [upload, showPreview, onUploadingChange],
   );
 
   const handleDrop = useCallback(

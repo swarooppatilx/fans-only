@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { hardhat } from "viem/chains";
+import { useAccount } from "wagmi";
 import {
   Bars3Icon,
   ChartBarIcon,
@@ -13,6 +14,7 @@ import {
   MagnifyingGlassIcon,
   PlusCircleIcon,
   UserCircleIcon,
+  UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import { HomeIcon as HomeIconSolid, UserCircleIcon as UserIconSolid } from "@heroicons/react/24/solid";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
@@ -20,31 +22,45 @@ import { getIpfsUrl, useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfi
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 /**
- * Simplified navigation - MVP only
+ * Navigation links based on user state:
+ * - Not connected: Explore only
+ * - Connected viewer: Feed, Explore, Become Creator, Settings
+ * - Connected creator: Feed, Explore, Earnings, Profile, Settings
  */
 export const HeaderMenuLinks = () => {
   const pathname = usePathname();
-  const { isCreator, creator } = useCurrentCreator();
+  const { isConnected } = useAccount();
+  const { isCreator, creator, isLoading } = useCurrentCreator();
 
-  // Dynamic profile link
-  const profileLink = isCreator && creator?.username ? `/creator/${creator.username}` : "/profile/create";
+  // Build links based on user state
+  type NavLink = {
+    label: string;
+    href: string;
+    icon: React.ReactNode;
+    iconActive?: React.ReactNode;
+  };
 
-  const links = [
-    {
+  const links: NavLink[] = [];
+
+  // Explore - always visible to everyone
+  links.push({
+    label: "Explore",
+    href: "/explore",
+    icon: <MagnifyingGlassIcon className="h-5 w-5" />,
+  });
+
+  // Feed - requires connection (shows subscribed content for viewers, all for creators)
+  if (isConnected) {
+    links.push({
       label: "Feed",
       href: "/feed",
       icon: <HomeIcon className="h-5 w-5" />,
       iconActive: <HomeIconSolid className="h-5 w-5" />,
-    },
-    {
-      label: "Explore",
-      href: "/explore",
-      icon: <MagnifyingGlassIcon className="h-5 w-5" />,
-    },
-  ];
+    });
+  }
 
-  // Creator-only links
-  if (isCreator) {
+  // Earnings - creators only
+  if (isConnected && isCreator) {
     links.push({
       label: "Earnings",
       href: "/earnings",
@@ -52,20 +68,31 @@ export const HeaderMenuLinks = () => {
     });
   }
 
-  // Profile link (always show)
-  links.push({
-    label: "Profile",
-    href: profileLink,
-    icon: <UserCircleIcon className="h-5 w-5" />,
-    iconActive: <UserIconSolid className="h-5 w-5" />,
-  });
+  // Profile link - different for creators vs viewers
+  if (isConnected && !isLoading) {
+    if (isCreator && creator?.username) {
+      links.push({
+        label: "Profile",
+        href: `/creator/${creator.username}`,
+        icon: <UserCircleIcon className="h-5 w-5" />,
+        iconActive: <UserIconSolid className="h-5 w-5" />,
+      });
+    } else {
+      // Show "Become Creator" for connected non-creators
+      links.push({
+        label: "Become Creator",
+        href: "/profile/create",
+        icon: <UserPlusIcon className="h-5 w-5" />,
+      });
+    }
 
-  // Settings
-  links.push({
-    label: "Settings",
-    href: "/settings",
-    icon: <Cog6ToothIcon className="h-5 w-5" />,
-  });
+    // Settings - requires connection
+    links.push({
+      label: "Settings",
+      href: "/settings",
+      icon: <Cog6ToothIcon className="h-5 w-5" />,
+    });
+  }
 
   return (
     <>
@@ -106,11 +133,12 @@ export const HeaderMenuLinks = () => {
 };
 
 /**
- * Site header - simplified for MVP
+ * Site header - adapts based on user state
  */
 export const Header = () => {
   const { targetNetwork } = useTargetNetwork();
   const isLocalNetwork = targetNetwork.id === hardhat.id;
+  const { isConnected } = useAccount();
   const { isCreator, creator } = useCurrentCreator();
 
   const burgerMenuRef = useRef<HTMLDetailsElement>(null);
@@ -155,15 +183,15 @@ export const Header = () => {
       {/* Right side */}
       <div className="navbar-end grow mr-4 gap-2">
         {/* Create Post - creators only */}
-        {isCreator && (
+        {isConnected && isCreator && (
           <Link href="/create" className="btn btn-sm btn-primary gap-1" title="Create Post">
             <PlusCircleIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Create</span>
           </Link>
         )}
 
-        {/* Mobile profile avatar */}
-        {isCreator && creator && (
+        {/* Mobile profile avatar - creators only */}
+        {isConnected && isCreator && creator && (
           <Link href={profileLink} className="lg:hidden">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-fo-primary to-fo-accent p-0.5">
               {creator.profileImageCID ? (

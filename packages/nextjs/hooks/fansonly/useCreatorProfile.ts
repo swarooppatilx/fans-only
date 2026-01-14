@@ -30,7 +30,9 @@ export interface Subscription {
 }
 
 // IPFS gateway for displaying images
-export const IPFS_GATEWAY = "https://gateway.pinata.cloud/ipfs/";
+// Pinata gateway format: https://{gateway}.mypinata.cloud/ipfs/{CID}
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL;
+export const IPFS_GATEWAY = GATEWAY_URL ? `https://${GATEWAY_URL}/ipfs/` : "https://ipfs.io/ipfs/";
 
 export function getIpfsUrl(cid: string): string {
   if (!cid) return "";

@@ -12,9 +12,11 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { useAllCreators } from "~~/hooks/fansonly/useCreatorProfile";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
+  const { totalCreators } = useAllCreators(0, 1);
 
   const features = [
     {
@@ -91,8 +93,8 @@ const Home: NextPage = () => {
       <section className="py-12 px-4 border-y border-[--fo-border]">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
-            { value: "100+", label: "Creators" },
-            { value: "1,000+", label: "Subscribers" },
+            { value: totalCreators.toString(), label: "Creators" },
+            { value: "—", label: "Subscribers" },
             { value: "5%", label: "Platform Fee" },
             { value: "0", label: "Hidden Fees" },
           ].map((stat, i) => (

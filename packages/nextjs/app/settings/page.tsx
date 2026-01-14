@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useDisconnect } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import {
   ArrowRightOnRectangleIcon,
   BellIcon,
+  Cog6ToothIcon,
   MoonIcon,
   PencilIcon,
   SunIcon,
@@ -14,6 +15,7 @@ import {
 import { useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfile";
 
 export default function SettingsPage() {
+  const { isConnected } = useAccount();
   const { isCreator, creator } = useCurrentCreator();
   const { disconnect } = useDisconnect();
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
@@ -26,6 +28,19 @@ export default function SettingsPage() {
   });
 
   const profileLink = isCreator && creator?.username ? `/creator/${creator.username}` : "/profile/create";
+
+  // Not connected
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="fo-card p-8 text-center max-w-md">
+          <Cog6ToothIcon className="w-16 h-16 mx-auto mb-4 text-[--fo-text-muted]" />
+          <h2 className="text-2xl font-bold mb-2">Settings</h2>
+          <p className="text-[--fo-text-secondary]">Connect your wallet to access settings</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-8 px-4">

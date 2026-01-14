@@ -1,12 +1,14 @@
 /**
  * IPFS Upload Service
- * Uses web3.storage or Pinata for decentralized file storage
+ * Uses Pinata SDK for decentralized file storage
  */
 
-const IPFS_GATEWAY = process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://ipfs.io/ipfs";
+// Pinata gateway format: https://{gateway}.mypinata.cloud/ipfs/{CID}
+// Fallback to public ipfs.io gateway if not configured
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL;
+const IPFS_GATEWAY = GATEWAY_URL ? `https://${GATEWAY_URL}/ipfs` : "https://ipfs.io/ipfs";
 
-// For production, use web3.storage, Pinata, or nft.storage
-// These are placeholder implementations that work with public gateways
+// For production, uploads go through /api/upload route using Pinata SDK
 
 export interface UploadResult {
   cid: string;

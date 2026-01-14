@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { PinataSDK } from "pinata";
 import { type UploadResult, formatFileSize, getFileCategory, getIPFSUrl, isValidCID } from "~~/services/ipfs";
+
+// Client-side Pinata SDK instance for uploads via signed URLs
+const pinataClient = new PinataSDK({
+  pinataJwt: "",
+  pinataGateway: process.env.NEXT_PUBLIC_GATEWAY_URL,
+});
 
 interface UseIPFSUploadOptions {
   maxSizeMB?: number;
@@ -23,7 +30,7 @@ const DEFAULT_MAX_SIZE_MB = 100; // 100MB default max
 const DEFAULT_ALLOWED_TYPES = ["image/*", "video/*", "audio/*", "application/pdf"];
 
 /**
- * Hook for handling IPFS file uploads
+ * Hook for handling IPFS file uploads using Pinata v3 API with signed URLs
  */
 export function useIPFSUpload(options: UseIPFSUploadOptions = {}): UseIPFSUploadReturn {
   const { maxSizeMB = DEFAULT_MAX_SIZE_MB, allowedTypes = DEFAULT_ALLOWED_TYPES, onSuccess, onError } = options;
@@ -74,67 +81,30 @@ export function useIPFSUpload(options: UseIPFSUploadOptions = {}): UseIPFSUpload
       setIsUploading(true);
 
       try {
-        // Get API keys from environment
-        const pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
-        const pinataSecretKey = process.env.NEXT_PUBLIC_PINATA_SECRET_KEY;
+        setProgress(10);
 
-        if (!pinataApiKey || !pinataSecretKey) {
-          // Fallback: Generate a mock CID for development
-          // In production, this should throw an error
-          console.warn("IPFS API keys not configured. Using mock upload for development.");
-
-          setProgress(50);
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate upload delay
-
-          const mockCid = `Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-
-          setProgress(100);
-
-          const result: UploadResult = {
-            cid: mockCid,
-            url: getIPFSUrl(mockCid),
-            size: file.size,
-            name: file.name,
-          };
-
-          onSuccess?.(result);
-          return result;
+        // Get signed upload URL from server
+        const urlRequest = await fetch("/api/url");
+        if (!urlRequest.ok) {
+          throw new Error("Failed to get upload URL");
         }
+        const { url: signedUrl } = await urlRequest.json();
 
-        // Real upload to Pinata
-        const formData = new FormData();
-        formData.append("file", file);
+        setProgress(30);
 
-        const metadata = JSON.stringify({
-          name: file.name,
-          keyvalues: {
-            app: "FansOnly",
-            type: file.type,
-            category: getFileCategory(file.type),
-          },
-        });
-        formData.append("pinataMetadata", metadata);
-        formData.append("pinataOptions", JSON.stringify({ cidVersion: 1 }));
+        // Upload file using Pinata SDK with signed URL
+        const uploadResponse = await pinataClient.upload.public.file(file).url(signedUrl);
 
-        const response = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
-          method: "POST",
-          headers: {
-            pinata_api_key: pinataApiKey,
-            pinata_secret_api_key: pinataSecretKey,
-          },
-          body: formData,
-        });
+        setProgress(80);
 
-        if (!response.ok) {
-          throw new Error(`Upload failed: ${response.statusText}`);
-        }
+        // Get the gateway URL for the uploaded file
+        const fileUrl = await pinataClient.gateways.public.convert(uploadResponse.cid);
 
-        const data = await response.json();
         setProgress(100);
 
         const result: UploadResult = {
-          cid: data.IpfsHash,
-          url: getIPFSUrl(data.IpfsHash),
+          cid: uploadResponse.cid,
+          url: fileUrl,
           size: file.size,
           name: file.name,
         };

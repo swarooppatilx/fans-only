@@ -10,6 +10,7 @@ import {
   CheckBadgeIcon,
   EllipsisHorizontalIcon,
   HeartIcon,
+  HomeIcon,
   LockClosedIcon,
   PhotoIcon,
   ShareIcon,
@@ -374,6 +375,26 @@ const FeedPage: NextPage = () => {
 
   const isLoading = isLoadingCreators;
   const hasPosts = filteredPosts.length > 0;
+
+  // Not connected - show connect prompt
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="fo-card p-8 text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
+            <HomeIcon className="w-10 h-10 text-[--fo-primary]" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Your Feed Awaits</h2>
+          <p className="text-[--fo-text-secondary] mb-6">
+            Connect your wallet to see posts from creators you follow and discover new content.
+          </p>
+          <Link href="/explore" className="fo-btn-primary inline-block">
+            Explore Creators
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
