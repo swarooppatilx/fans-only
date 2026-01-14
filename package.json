@@ -56,5 +56,9 @@
   "packageManager": "yarn@3.2.3",
   "engines": {
     "node": ">=20.18.3"
+  },
+  "dependencies": {
+    "daisyui": "^5.5.14",
+    "lucide-react": "^0.562.0"
   }
 }
