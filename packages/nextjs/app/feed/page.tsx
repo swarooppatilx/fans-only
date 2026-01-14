@@ -22,8 +22,9 @@ import {
   Post,
   useCreatorPosts,
   useLikePost,
+  usePost,
   useUnlikePost,
-} from "~~/hooks/fansonly/useContentPost";
+} from "~~/hooks/fansonly";
 import {
   Creator,
   Subscription,
@@ -110,14 +111,21 @@ interface PostCardProps {
   onUnlike: () => void;
 }
 
-const PostCard = ({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUnlike }: PostCardProps) => {
+function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUnlike }: PostCardProps) {
   const [localLiked, setLocalLiked] = useState(hasLiked);
   const [localLikeCount, setLocalLikeCount] = useState(Number(post.likesCount));
 
+  // Fetch the post with the connected user's address for access control (profile logic)
+  const { post: userPost, canAccess } = usePost(post.id);
+
   const canView =
     post.accessLevel === AccessLevel.PUBLIC ||
-    (post.accessLevel === AccessLevel.SUBSCRIBERS && isSubscribed) ||
-    (post.accessLevel === AccessLevel.TIER_GATED && subscribedTierId >= post.requiredTierId);
+    (isSubscribed && post.accessLevel === AccessLevel.SUBSCRIBERS) ||
+    (isSubscribed && post.accessLevel === AccessLevel.TIER_GATED && subscribedTierId >= post.requiredTierId) ||
+    canAccess;
+
+  // Use the user's post data for contentCID if available and user can access
+  const contentCID = canView && userPost?.contentCID ? userPost.contentCID : post.contentCID;
 
   const formatTimeAgo = (timestamp: bigint) => {
     const seconds = Math.floor(Date.now() / 1000 - Number(timestamp));
@@ -139,7 +147,6 @@ const PostCard = ({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
     }
   };
 
-  const contentTypeIcons = ["📝", "🖼️", "🎬", "🎵", "📦"];
   const username = post.creatorData?.username || post.creator.slice(0, 8);
   const displayName = post.creatorData?.displayName || `Creator ${post.creator.slice(0, 6)}`;
 
@@ -187,16 +194,9 @@ const PostCard = ({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
       {/* Media */}
       {post.contentType !== ContentType.TEXT && (
         <div className="relative">
-          {canView ? (
+          {canView && contentCID ? (
             <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
-              {post.contentCID ? (
-                <Image src={getIpfsUrl(post.contentCID)} alt="Post content" fill className="object-cover" unoptimized />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-[--fo-text-muted]">
-                  <PhotoIcon className="w-12 h-12" />
-                  <span className="text-sm">{contentTypeIcons[post.contentType]} Content</span>
-                </div>
-              )}
+              <Image src={getIpfsUrl(contentCID)} alt="Post content" fill className="object-cover" unoptimized />
             </div>
           ) : (
             <div className="fo-post-media relative">
@@ -235,7 +235,7 @@ const PostCard = ({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
       </div>
     </div>
   );
-};
+}
 
 // Wrapper component that handles like actions
 function PostCardWithActions({
@@ -342,6 +342,7 @@ const FeedPage: NextPage = () => {
     allPosts.forEach((creatorPosts, creatorAddress) => {
       const creatorData = creatorDataMap.get(creatorAddress);
       creatorPosts.forEach(post => {
+        // Always include all active posts, even if locked (contentCID may be empty)
         if (post.isActive) {
           posts.push({
             ...post,
