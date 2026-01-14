@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import {
@@ -11,12 +13,39 @@ import {
   SparklesIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
+import LaunchPopup from "~~/components/fansonly/LaunchPopup";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useAllCreators } from "~~/hooks/fansonly/useCreatorProfile";
 
 const Home: NextPage = () => {
-  const { address: connectedAddress } = useAccount();
+  const { address: connectedAddress, isConnected } = useAccount();
   const { totalCreators } = useAllCreators(0, 1);
+  const [showLaunchPopup, setShowLaunchPopup] = useState(false);
+  const { openConnectModal } = useConnectModal();
+
+  useEffect(() => {
+    // Show popup on first visit if wallet not connected
+    const hasSeenPopup = localStorage.getItem("fansonly_seen_popup");
+    if (!isConnected && !hasSeenPopup) {
+      setShowLaunchPopup(true);
+    }
+  }, [isConnected]);
+
+  const handleConnectWallet = () => {
+    setShowLaunchPopup(false);
+    localStorage.setItem("fansonly_seen_popup", "true");
+    openConnectModal?.();
+  };
+
+  const handleExploreAsGuest = () => {
+    setShowLaunchPopup(false);
+    localStorage.setItem("fansonly_seen_popup", "true");
+  };
+
+  const handleClosePopup = () => {
+    setShowLaunchPopup(false);
+    localStorage.setItem("fansonly_seen_popup", "true");
+  };
 
   const features = [
     {
@@ -47,23 +76,27 @@ const Home: NextPage = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-slate-900">
+      {/* Launch Popup */}
+      {showLaunchPopup && (
+        <LaunchPopup onConnect={handleConnectWallet} onExplore={handleExploreAsGuest} onClose={handleClosePopup} />
+      )}
+
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-[--fo-primary]/10 to-transparent pointer-events-none" />
-        <div className="max-w-6xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-[--fo-primary-light] text-[--fo-primary] px-4 py-2 rounded-full text-sm font-medium mb-6">
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 bg-slate-800 text-[#00aff0] px-4 py-2 rounded-full text-sm font-medium mb-6 border border-slate-700">
             <SparklesIcon className="h-4 w-4" />
             Built on Mantle Network
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            <span className="fo-gradient-text">Monetize Your Content</span>
+            <span className="text-[#00aff0]">Monetize Your Content</span>
             <br />
-            <span className="text-base-content">On Your Terms</span>
+            <span className="text-slate-100">On Your Terms</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-[--fo-text-secondary] max-w-2xl mx-auto mb-8">
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-8">
             The decentralized platform for creators. Accept crypto subscriptions, maintain full control of your content,
             and keep 95% of your earnings.
           </p>
@@ -71,18 +104,24 @@ const Home: NextPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             {connectedAddress ? (
               <>
-                <Link href="/explore" className="fo-btn-primary flex items-center gap-2">
+                <Link
+                  href="/explore"
+                  className="flex items-center gap-2 px-6 py-3 bg-[#00aff0] hover:bg-[#009bd6] text-white font-semibold rounded-full transition-all duration-200 shadow-lg shadow-[#00aff0]/30 hover:shadow-[#00aff0]/50"
+                >
                   Explore Creators
                   <ArrowRightIcon className="h-5 w-5" />
                 </Link>
-                <Link href="/profile/create" className="fo-btn-secondary">
+                <Link
+                  href="/profile/create"
+                  className="px-6 py-3 bg-transparent border-2 border-[#00aff0] text-[#00aff0] hover:bg-[#00aff0]/10 font-semibold rounded-full transition-all duration-200"
+                >
                   Become a Creator
                 </Link>
               </>
             ) : (
               <>
                 <RainbowKitCustomConnectButton />
-                <p className="text-sm text-[--fo-text-muted]">Connect your wallet to get started</p>
+                <p className="text-sm text-slate-500">Connect your wallet to get started</p>
               </>
             )}
           </div>
@@ -90,7 +129,7 @@ const Home: NextPage = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 px-4 border-y border-[--fo-border]">
+      <section className="py-12 px-4 border-y border-slate-800">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
             { value: totalCreators.toString(), label: "Creators" },
@@ -98,9 +137,9 @@ const Home: NextPage = () => {
             { value: "5%", label: "Platform Fee" },
             { value: "0", label: "Hidden Fees" },
           ].map((stat, i) => (
-            <div key={i} className="fo-stat">
-              <div className="fo-stat-value text-2xl md:text-3xl fo-gradient-text">{stat.value}</div>
-              <div className="fo-stat-label">{stat.label}</div>
+            <div key={i} className="text-center">
+              <div className="text-2xl md:text-3xl font-bold text-[#00aff0]">{stat.value}</div>
+              <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -108,22 +147,25 @@ const Home: NextPage = () => {
 
       {/* Features Section */}
       <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-            Why Choose <span className="fo-gradient-text">FansOnly</span>?
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-slate-100">
+            Why Choose <span className="text-[#00aff0]">FansOnly</span>?
           </h2>
-          <p className="text-[--fo-text-secondary] text-center max-w-2xl mx-auto mb-12">
+          <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
             Built for creators who want ownership, transparency, and direct connection with their audience.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {features.map((feature, i) => (
-              <div key={i} className="fo-card-elevated p-8 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[--fo-primary-light] flex items-center justify-center text-[--fo-primary]">
+              <div
+                key={i}
+                className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 text-center hover:border-[#00aff0]/50 transition-all duration-200"
+              >
+                <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-slate-700 flex items-center justify-center text-[#00aff0]">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-[--fo-text-secondary]">{feature.description}</p>
+                <h3 className="text-lg font-semibold mb-2 text-slate-100">{feature.title}</h3>
+                <p className="text-slate-400 text-sm">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -131,24 +173,33 @@ const Home: NextPage = () => {
       </section>
 
       {/* Subscription Tiers Preview */}
-      <section className="py-20 px-4 bg-base-200">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Flexible Subscription Tiers</h2>
-          <p className="text-[--fo-text-secondary] text-center max-w-2xl mx-auto mb-12">
+      <section className="py-20 px-4 bg-slate-800/30">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-slate-100">
+            Flexible Subscription Tiers
+          </h2>
+          <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
             Creators can set up to 5 custom tiers with different perks and pricing.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6">
             {tiers.map((tier, i) => (
-              <div key={i} className={`fo-tier-card ${i === 1 ? "border-[--fo-primary] scale-105" : ""}`}>
-                {i === 1 && <div className="fo-badge-verified mb-4">Most Popular</div>}
-                <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
-                <p className="text-3xl font-bold fo-gradient-text mb-4">{tier.price}</p>
-                <p className="text-sm text-[--fo-text-muted] mb-6">per month</p>
-                <ul className="space-y-2 text-left">
+              <div
+                key={i}
+                className={`bg-slate-800 border rounded-2xl p-6 text-center transition-all duration-200 ${i === 1 ? "border-[#00aff0] scale-105 shadow-lg shadow-[#00aff0]/20" : "border-slate-700 hover:border-slate-600"}`}
+              >
+                {i === 1 && (
+                  <div className="inline-flex items-center gap-1 bg-[#00aff0] text-white text-xs font-semibold px-3 py-1 rounded-full mb-4">
+                    Most Popular
+                  </div>
+                )}
+                <h3 className="text-2xl font-bold mb-2 text-slate-100">{tier.name}</h3>
+                <p className="text-3xl font-bold text-[#00aff0] mb-2">{tier.price}</p>
+                <p className="text-sm text-slate-500 mb-6">per month</p>
+                <ul className="space-y-3 text-left">
                   {tier.features.map((feature, j) => (
-                    <li key={j} className="flex items-center gap-2 text-sm">
-                      <CheckCircleIcon className="h-5 w-5 text-[--fo-primary]" />
+                    <li key={j} className="flex items-center gap-2 text-sm text-slate-300">
+                      <CheckCircleIcon className="h-5 w-5 text-[#00aff0] shrink-0" />
                       {feature}
                     </li>
                   ))}
@@ -161,17 +212,23 @@ const Home: NextPage = () => {
 
       {/* CTA Section */}
       <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Earning?</h2>
-          <p className="text-[--fo-text-secondary] mb-8 max-w-xl mx-auto">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-100">Ready to Start Earning?</h2>
+          <p className="text-slate-400 mb-8">
             Join the decentralized creator economy. Set up your profile in minutes and start accepting crypto
             subscriptions today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/profile/create" className="fo-btn-primary">
+            <Link
+              href="/profile/create"
+              className="px-6 py-3 bg-[#00aff0] hover:bg-[#009bd6] text-white font-semibold rounded-full transition-all duration-200 shadow-lg shadow-[#00aff0]/30"
+            >
               Create Your Profile
             </Link>
-            <Link href="/explore" className="fo-btn-secondary">
+            <Link
+              href="/explore"
+              className="px-6 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold rounded-full transition-all duration-200"
+            >
               Browse Creators
             </Link>
           </div>

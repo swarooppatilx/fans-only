@@ -1,9 +1,10 @@
-import { Providers } from "../components/Providers";
-import FansOnlyHeader from "../components/fansonly/layout/Header";
-import Sidebar from "../components/fansonly/layout/Sidebar";
 import "@rainbow-me/rainbowkit/styles.css";
 import "@scaffold-ui/components/styles.css";
+import { Providers } from "~~/components/Providers";
 import { ThemeProvider } from "~~/components/ThemeProvider";
+import MobileBottomNav from "~~/components/fansonly/layout/MobileBottomNav";
+import RightSidebar from "~~/components/fansonly/layout/RightSidebar";
+import Sidebar from "~~/components/fansonly/layout/Sidebar";
 import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
@@ -14,27 +15,35 @@ export const metadata = getMetadata({
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html suppressHydrationWarning>
-      <body>
+    <html suppressHydrationWarning data-theme="dark">
+      <body className="bg-slate-900 text-slate-100">
         <ThemeProvider enableSystem>
           <Providers>
-            <div className="min-h-screen bg-base-200 grid grid-rows-[auto_1fr] grid-cols-1 lg:grid-cols-[15rem_1fr_20rem] xl:grid-cols-[15rem_1fr_20rem]">
-              {/* Header (spans all columns) */}
-              <div className="row-start-1 row-end-2 col-span-full">
-                <FansOnlyHeader />
+            <div className="min-h-screen bg-slate-900 text-slate-100 font-sans relative">
+              <div className="flex justify-center">
+                {/* Left Sidebar - Fixed position on desktop */}
+                <aside className="hidden xl:block w-[280px] shrink-0">
+                  <div className="fixed top-0 w-[280px] h-screen bg-slate-900 z-30">
+                    <Sidebar />
+                  </div>
+                </aside>
+
+                {/* Main Content Area */}
+                <main className="flex-1 min-h-screen max-w-[600px] w-full border-x border-slate-800 bg-slate-900">
+                  {children}
+                </main>
+
+                {/* Right Sidebar - Hidden on smaller screens */}
+                <aside className="hidden lg:block w-[350px] shrink-0">
+                  <div className="fixed top-0 w-[350px] h-screen bg-slate-900 z-20">
+                    <RightSidebar />
+                  </div>
+                </aside>
               </div>
-              {/* Sidebar */}
-              <aside className="hidden lg:flex row-start-2 row-end-3 col-start-1 col-end-2 h-full bg-base-100 border-r border-base-300 z-20">
-                <Sidebar />
-              </aside>
-              {/* Main content */}
-              <main className="row-start-2 row-end-3 col-start-1 lg:col-start-2 col-end-3 px-4 py-6 max-w-full">
-                {children}
-              </main>
-              {/* Right Sidebar */}
-              <aside className="hidden xl:flex row-start-2 row-end-3 col-start-3 col-end-4 h-full bg-base-100 border-l border-base-300 z-10">
-                {/* Add right sidebar content here if needed */}
-              </aside>
+
+              {/* Mobile Bottom Nav */}
+              <MobileBottomNav />
+              <div className="h-16 xl:hidden"></div>
             </div>
           </Providers>
         </ThemeProvider>

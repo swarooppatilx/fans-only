@@ -117,7 +117,7 @@ const CreateProfilePage: NextPage = () => {
           {/* Profile Image Placeholder */}
           <div className="flex justify-center">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-fo-primary to-fo-accent flex items-center justify-center text-white text-3xl font-bold">
+              <div className="w-24 h-24 rounded-full bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-[#00aff0] text-3xl font-bold">
                 {formData.displayName ? formData.displayName.charAt(0).toUpperCase() : "?"}
               </div>
               <div className="absolute bottom-0 right-0 p-2 bg-base-100 rounded-full border border-base-300">

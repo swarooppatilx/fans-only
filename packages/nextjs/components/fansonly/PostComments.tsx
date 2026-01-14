@@ -62,7 +62,7 @@ export function PostComments({ postId, isExpanded }: PostCommentsProps) {
             .filter((c: Comment) => c.isActive)
             .map((comment: Comment) => (
               <div key={comment.id.toString()} className="flex gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-fo-primary to-fo-accent flex-shrink-0 flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex-shrink-0 flex items-center justify-center text-[#00aff0] text-xs font-bold">
                   {comment.commenter.slice(2, 4).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">

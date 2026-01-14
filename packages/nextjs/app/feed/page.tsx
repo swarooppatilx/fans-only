@@ -3,19 +3,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  DollarSign,
+  Heart,
+  Home as HomeIcon,
+  ImageIcon,
+  Lock,
+  MessageCircle,
+  MoreHorizontal,
+  Share2,
+  Sparkles,
+} from "lucide-react";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
-import {
-  ChatBubbleLeftIcon,
-  CheckBadgeIcon,
-  EllipsisHorizontalIcon,
-  HeartIcon,
-  HomeIcon,
-  LockClosedIcon,
-  PhotoIcon,
-  ShareIcon,
-} from "@heroicons/react/24/outline";
-import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import { CheckBadgeIcon } from "@heroicons/react/24/outline";
 import {
   AccessLevel,
   ContentType,
@@ -151,87 +152,122 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
   const displayName = post.creatorData?.displayName || `Creator ${post.creator.slice(0, 6)}`;
 
   return (
-    <div className="fo-post-card">
-      {/* Header */}
-      <div className="fo-post-header">
-        <Link href={`/creator/${username}`} className="flex items-center gap-3 flex-1">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-0.5">
+    <div className="border-b border-slate-800 p-4 hover:bg-slate-900/50 transition-colors">
+      <div className="flex gap-4">
+        {/* Avatar */}
+        <div className="flex-shrink-0">
+          <Link href={`/creator/${username}`}>
             {post.creatorData?.profileImageCID ? (
               <Image
                 src={getIpfsUrl(post.creatorData.profileImageCID)}
                 alt={displayName}
-                width={40}
-                height={40}
-                className="w-full h-full rounded-full object-cover"
+                width={48}
+                height={48}
+                className="w-12 h-12 rounded-full object-cover border border-slate-700"
                 unoptimized
               />
             ) : (
-              <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-sm font-bold text-[--fo-primary]">
+              <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-[#00aff0]">
                 {displayName.charAt(0)}
               </div>
             )}
-          </div>
-          <div>
-            <div className="flex items-center gap-1">
-              <span className="font-semibold hover:text-[--fo-primary] transition-colors">{displayName}</span>
-              {post.creatorData?.isVerified && <CheckBadgeIcon className="w-4 h-4 text-[--fo-primary]" />}
-            </div>
-            <div className="text-sm text-[--fo-text-muted]">
-              @{username} · {formatTimeAgo(post.createdAt)}
-            </div>
-          </div>
-        </Link>
-        <button className="p-2 hover:bg-base-200 rounded-full">
-          <EllipsisHorizontalIcon className="w-5 h-5 text-[--fo-text-muted]" />
-        </button>
-      </div>
+          </Link>
+        </div>
 
-      {/* Caption */}
-      <div className="fo-post-content">
-        <p className="whitespace-pre-wrap">{post.caption}</p>
-      </div>
-
-      {/* Media */}
-      {post.contentType !== ContentType.TEXT && (
-        <div className="relative">
-          {canView && contentCID ? (
-            <div className="fo-post-media bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
-              <Image src={getIpfsUrl(contentCID)} alt="Post content" fill className="object-cover" unoptimized />
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Link href={`/creator/${username}`} className="font-bold text-slate-100 hover:underline cursor-pointer">
+                {displayName}
+              </Link>
+              {post.creatorData?.isVerified && <CheckBadgeIcon className="w-4 h-4 text-[#00aff0]" />}
+              <span className="text-slate-500 text-sm">
+                @{username} · {formatTimeAgo(post.createdAt)}
+              </span>
             </div>
-          ) : (
-            <div className="fo-post-media relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-base-300 to-base-200" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
-                <div className="w-14 h-14 rounded-full bg-base-100/80 flex items-center justify-center">
-                  <LockClosedIcon className="w-7 h-7 text-[--fo-primary]" />
+            <button className="text-slate-500 hover:text-[#00aff0]">
+              <MoreHorizontal size={18} />
+            </button>
+          </div>
+
+          {/* Text Body */}
+          <p className="mt-1 text-slate-200 whitespace-pre-wrap leading-relaxed">{post.caption}</p>
+
+          {/* Media / Locked Content */}
+          {post.contentType !== ContentType.TEXT && (
+            <div className="mt-3 relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+              {canView && contentCID ? (
+                <Image
+                  src={getIpfsUrl(contentCID)}
+                  alt="Post content"
+                  width={600}
+                  height={400}
+                  className="w-full h-auto max-h-[500px] object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="relative w-full h-64 md:h-80 group">
+                  {/* Blurry Background */}
+                  <div className="absolute inset-0 bg-slate-800/80 backdrop-blur-md"></div>
+
+                  {/* Lock Overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+                    <div className="w-14 h-14 bg-slate-800 rounded-full flex items-center justify-center mb-4 text-[#00aff0] shadow-sm border border-slate-700">
+                      <Lock size={26} />
+                    </div>
+                    <h3 className="text-slate-100 font-bold text-lg mb-1">Premium Content</h3>
+                    <p className="text-slate-400 text-sm mb-5 font-medium">
+                      {post.accessLevel === AccessLevel.SUBSCRIBERS
+                        ? "Subscribe to unlock this content"
+                        : `Tier ${Number(post.requiredTierId) + 1} required`}
+                    </p>
+                    <Link
+                      href={`/creator/${username}`}
+                      className="bg-[#00aff0] hover:bg-[#009bd6] text-white border-none px-8 py-2.5 text-sm font-bold rounded-full transition-all"
+                    >
+                      View Profile
+                    </Link>
+                  </div>
                 </div>
-                <p className="text-center font-medium text-sm">
-                  {post.accessLevel === AccessLevel.SUBSCRIBERS
-                    ? "Subscribe to unlock"
-                    : `Tier ${Number(post.requiredTierId) + 1} required`}
-                </p>
-                <Link href={`/creator/${username}`} className="fo-btn-subscribe text-xs py-2 px-4">
-                  View Profile
-                </Link>
-              </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* Actions */}
-      <div className="fo-post-actions">
-        <button className="fo-post-action" onClick={handleLikeClick}>
-          {localLiked ? <HeartSolidIcon className="w-5 h-5 text-red-500" /> : <HeartIcon className="w-5 h-5" />}
-          <span>{localLikeCount}</span>
-        </button>
-        <button className="fo-post-action">
-          <ChatBubbleLeftIcon className="w-5 h-5" />
-          <span>{Number(post.commentsCount)}</span>
-        </button>
-        <button className="fo-post-action ml-auto">
-          <ShareIcon className="w-5 h-5" />
-        </button>
+          {/* Action Bar */}
+          <div className="flex items-center justify-between mt-3 max-w-md">
+            <button
+              onClick={handleLikeClick}
+              className={`flex items-center gap-2 text-sm group ${localLiked ? "text-rose-500" : "text-slate-500 hover:text-rose-500"}`}
+            >
+              <div className="p-2 rounded-full group-hover:bg-rose-500/10 transition-colors">
+                <Heart size={18} fill={localLiked ? "currentColor" : "none"} />
+              </div>
+              <span className="font-medium">{localLikeCount}</span>
+            </button>
+
+            <button className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#00aff0] group">
+              <div className="p-2 rounded-full group-hover:bg-[#00aff0]/10 transition-colors">
+                <MessageCircle size={18} />
+              </div>
+              <span className="font-medium">{Number(post.commentsCount)}</span>
+            </button>
+
+            <button className="flex items-center gap-2 text-sm text-slate-500 hover:text-emerald-500 group">
+              <div className="p-2 rounded-full group-hover:bg-emerald-500/10 transition-colors">
+                <DollarSign size={18} />
+              </div>
+              <span className="font-medium">Tip</span>
+            </button>
+
+            <button className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#00aff0] group">
+              <div className="p-2 rounded-full group-hover:bg-[#00aff0]/10 transition-colors">
+                <Share2 size={18} />
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -269,24 +305,25 @@ function PostCardWithActions({
 
 // Loading skeleton for posts
 const PostSkeleton = () => (
-  <div className="fo-post-card animate-pulse">
-    <div className="fo-post-header">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-base-300"></div>
-        <div className="space-y-2">
-          <div className="h-4 w-24 bg-base-300 rounded"></div>
-          <div className="h-3 w-32 bg-base-300 rounded"></div>
+  <div className="border-b border-slate-800 p-4 animate-pulse">
+    <div className="flex gap-4">
+      <div className="w-12 h-12 rounded-full bg-slate-800"></div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-4 w-24 bg-slate-800 rounded"></div>
+          <div className="h-3 w-32 bg-slate-800 rounded"></div>
+        </div>
+        <div className="space-y-2 mb-3">
+          <div className="h-4 bg-slate-800 rounded w-full"></div>
+          <div className="h-4 bg-slate-800 rounded w-3/4"></div>
+        </div>
+        <div className="rounded-2xl h-64 bg-slate-800"></div>
+        <div className="mt-3 flex gap-8">
+          <div className="h-5 w-12 bg-slate-800 rounded"></div>
+          <div className="h-5 w-12 bg-slate-800 rounded"></div>
+          <div className="h-5 w-12 bg-slate-800 rounded"></div>
         </div>
       </div>
-    </div>
-    <div className="fo-post-content space-y-2">
-      <div className="h-4 bg-base-300 rounded w-full"></div>
-      <div className="h-4 bg-base-300 rounded w-3/4"></div>
-    </div>
-    <div className="fo-post-media bg-base-300"></div>
-    <div className="fo-post-actions">
-      <div className="h-5 w-16 bg-base-300 rounded"></div>
-      <div className="h-5 w-16 bg-base-300 rounded"></div>
     </div>
   </div>
 );
@@ -380,16 +417,19 @@ const FeedPage: NextPage = () => {
   // Not connected - show connect prompt
   if (!isConnected) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="fo-card p-8 text-center max-w-md">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-[--fo-primary]/20 to-[--fo-accent]/20 flex items-center justify-center">
-            <HomeIcon className="w-10 h-10 text-[--fo-primary]" />
+      <div className="flex-1 min-h-screen border-r border-slate-800 max-w-2xl w-full bg-slate-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
+            <HomeIcon className="w-10 h-10 text-[#00aff0]" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Your Feed Awaits</h2>
-          <p className="text-[--fo-text-secondary] mb-6">
+          <h2 className="text-2xl font-bold mb-2 text-slate-100">Your Feed Awaits</h2>
+          <p className="text-slate-400 mb-6">
             Connect your wallet to see posts from creators you follow and discover new content.
           </p>
-          <Link href="/explore" className="fo-btn-primary inline-block">
+          <Link
+            href="/explore"
+            className="px-6 py-3 bg-[#00aff0] hover:bg-[#009bd6] text-white font-semibold rounded-full transition-all duration-200 inline-block"
+          >
             Explore Creators
           </Link>
         </div>
@@ -398,7 +438,7 @@ const FeedPage: NextPage = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="flex-1 min-h-screen border-r border-slate-800 max-w-2xl w-full bg-slate-900">
       {/* Hidden data fetchers */}
       {creatorAddresses.map(address => (
         <CreatorPostsFetcher key={`posts-${address}`} creatorAddress={address} onPostsLoaded={handlePostsLoaded} />
@@ -415,60 +455,55 @@ const FeedPage: NextPage = () => {
           />
         ))}
 
-      {/* Sticky Header */}
-      <div className="sticky top-16 z-10 bg-base-100 border-b border-[--fo-border]">
-        <div className="fo-feed-container !py-0">
-          <div className="flex">
-            <button
-              onClick={() => setActiveFilter("all")}
-              className={`flex-1 py-4 font-medium text-center border-b-2 transition-colors ${
-                activeFilter === "all"
-                  ? "text-[--fo-primary] border-[--fo-primary]"
-                  : "text-[--fo-text-muted] border-transparent hover:text-base-content"
-              }`}
-            >
-              For You
-            </button>
-            <button
-              onClick={() => setActiveFilter("subscribed")}
-              className={`flex-1 py-4 font-medium text-center border-b-2 transition-colors ${
-                activeFilter === "subscribed"
-                  ? "text-[--fo-primary] border-[--fo-primary]"
-                  : "text-[--fo-text-muted] border-transparent hover:text-base-content"
-              }`}
-            >
-              Subscribed
-            </button>
-          </div>
+      {/* Header */}
+      <div className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-slate-100">Home</h2>
+        <div className="flex gap-4 text-sm font-medium text-slate-400">
+          <button
+            onClick={() => setActiveFilter("subscribed")}
+            className={`py-3 -my-3 cursor-pointer transition-colors ${
+              activeFilter === "subscribed" ? "text-slate-100 border-b-2 border-[#00aff0]" : "hover:text-[#00aff0]"
+            }`}
+          >
+            Following
+          </button>
+          <button
+            onClick={() => setActiveFilter("all")}
+            className={`py-3 -my-3 cursor-pointer flex items-center gap-1 transition-colors ${
+              activeFilter === "all" ? "text-slate-100 border-b-2 border-[#00aff0]" : "hover:text-[#00aff0]"
+            }`}
+          >
+            For You <Sparkles size={14} className="text-amber-400" />
+          </button>
         </div>
       </div>
 
-      {/* Feed */}
-      <div className="fo-feed-container">
+      {/* Posts */}
+      <div className="flex flex-col pb-20">
         {/* Create Post CTA for Creators */}
         {isConnected && isCreator && (
-          <Link href="/create" className="block mb-4">
-            <div className="fo-card p-4 flex items-center gap-3 hover:border-[--fo-border-light] transition-colors cursor-pointer">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[--fo-primary] to-[--fo-accent] p-0.5">
-                <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-sm font-bold text-[--fo-primary]">
-                  {currentCreator?.displayName?.charAt(0) || "?"}
-                </div>
+          <Link href="/create" className="block border-b border-slate-800">
+            <div className="p-4 flex items-center gap-3 hover:bg-slate-900/50 transition-colors cursor-pointer">
+              <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-sm font-bold text-[#00aff0]">
+                {currentCreator?.displayName?.charAt(0) || "?"}
               </div>
-              <span className="text-[--fo-text-muted] flex-1">What&apos;s on your mind?</span>
-              <span className="fo-btn-primary text-sm py-2 px-4">Post</span>
+              <span className="text-slate-500 flex-1">What&apos;s on your mind?</span>
+              <span className="px-4 py-2 bg-[#00aff0] hover:bg-[#009bd6] text-white text-sm font-semibold rounded-full transition-all">
+                Post
+              </span>
             </div>
           </Link>
         )}
 
         {/* Loading State */}
         {isLoading ? (
-          <div className="space-y-4">
+          <>
             <PostSkeleton />
             <PostSkeleton />
             <PostSkeleton />
-          </div>
+          </>
         ) : hasPosts ? (
-          <div className="space-y-4">
+          <>
             {filteredPosts.map(post => {
               const subData = subscriptionMap.get(post.creator);
               return (
@@ -481,25 +516,30 @@ const FeedPage: NextPage = () => {
                 />
               );
             })}
-          </div>
+          </>
         ) : (
           <div className="text-center py-16">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-base-200 flex items-center justify-center">
-              <PhotoIcon className="w-10 h-10 text-[--fo-text-muted]" />
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
+              <ImageIcon className="w-10 h-10 text-slate-500" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">
+            <h3 className="text-xl font-semibold mb-2 text-slate-100">
               {activeFilter === "subscribed" ? "No subscribed content yet" : "No posts yet"}
             </h3>
-            <p className="text-[--fo-text-secondary] mb-6">
+            <p className="text-slate-400 mb-6">
               {activeFilter === "subscribed"
                 ? "Subscribe to creators to see their posts here"
                 : "Be the first to explore our creators"}
             </p>
-            <Link href="/explore" className="fo-btn-primary inline-block">
+            <Link
+              href="/explore"
+              className="px-6 py-3 bg-[#00aff0] hover:bg-[#009bd6] text-white font-semibold rounded-full transition-all duration-200 inline-block"
+            >
               Explore Creators
             </Link>
           </div>
         )}
+
+        <div className="p-12 text-center text-slate-600 text-sm">You&apos;ve reached the end of the internet 🚀</div>
       </div>
     </div>
   );
