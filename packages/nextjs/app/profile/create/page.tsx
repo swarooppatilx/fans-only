@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { CameraIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { FileUpload } from "~~/components/FileUpload";
 import { useCurrentCreator, useRegisterCreator } from "~~/hooks/fansonly/useCreatorProfile";
 
 const CreateProfilePage: NextPage = () => {
@@ -171,15 +172,43 @@ const CreateProfilePage: NextPage = () => {
             <p className="text-xs text-base-content/50 mt-1">{formData.bio.length}/500 characters</p>
           </div>
 
-          {/* Profile Image CID */}
+          {/* Profile Image Upload & CID */}
           <div>
-            <label className="block text-sm font-medium mb-1">Profile Image CID (optional)</label>
+            <FileUpload
+              label="Profile Image (IPFS upload or paste CID)"
+              accept="image/*"
+              maxSizeMB={10}
+              onUpload={cid => setFormData(f => ({ ...f, profileImageCID: cid }))}
+              onUploadingChange={() => {}}
+              showPreview={true}
+              className="mb-2"
+            />
             <input
               type="text"
               value={formData.profileImageCID}
               onChange={e => setFormData({ ...formData, profileImageCID: e.target.value })}
               placeholder="Qm... (IPFS CID)"
-              className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm"
+              className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm mt-2"
+            />
+          </div>
+
+          {/* Banner Image Upload & CID */}
+          <div>
+            <FileUpload
+              label="Banner Image (IPFS upload or paste CID)"
+              accept="image/*"
+              maxSizeMB={20}
+              onUpload={cid => setFormData(f => ({ ...f, bannerImageCID: cid }))}
+              onUploadingChange={() => {}}
+              showPreview={true}
+              className="mb-2"
+            />
+            <input
+              type="text"
+              value={formData.bannerImageCID}
+              onChange={e => setFormData({ ...formData, bannerImageCID: e.target.value })}
+              placeholder="Qm... (IPFS CID)"
+              className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm mt-2"
             />
           </div>
 

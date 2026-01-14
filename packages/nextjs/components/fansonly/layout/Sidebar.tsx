@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, Feather, Home, Mail, Search, User } from "lucide-react";
@@ -21,7 +22,7 @@ export default function Sidebar() {
       <div className="flex flex-col gap-6">
         {/* Logo */}
         <Link href="/" className="px-2 flex items-center">
-          <img src="/textlogo_white.svg" alt="FansOnly" className="h-10" />
+          <Image src="/textlogo_white.svg" alt="FansOnly" height={40} width={150} className="h-10 w-auto" priority />
         </Link>
 
         {/* Navigation */}
