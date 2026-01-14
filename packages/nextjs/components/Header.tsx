@@ -166,7 +166,7 @@ export const Header = () => {
 
         {/* Logo */}
         <Link href="/" className="flex items-center ml-4 mr-6 shrink-0">
-          <img src="/textlogo_white.svg" alt="FansOnly" className="h-8" />
+          <Image src="/textlogo_white.svg" alt="FansOnly" height={32} width={120} className="h-8 w-auto" priority />
         </Link>
       </div>
 
