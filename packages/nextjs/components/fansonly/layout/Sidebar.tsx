@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Feather, Home, Mail, Search, User } from "lucide-react";
+import { Bell, DollarSign, Feather, Home, Mail, Search, User } from "lucide-react";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfile";
 
 const navItems = [
   { id: "home", icon: Home, label: "Home", href: "/feed" },
@@ -16,6 +17,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { isCreator } = useCurrentCreator();
 
   return (
     <div className="h-screen flex flex-col justify-between py-6 px-4 xl:px-6 border-r border-slate-800 bg-slate-900 w-full z-30">
@@ -45,6 +47,22 @@ export default function Sidebar() {
               </Link>
             );
           })}
+
+          {/* Creator Earnings Link - Only show if user is a creator */}
+          {isCreator && (
+            <Link
+              href="/earnings"
+              className={`flex items-center gap-4 p-3 rounded-full transition-all duration-200 
+                ${
+                  pathname === "/earnings"
+                    ? "bg-slate-800 text-[#00aff0] font-bold"
+                    : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-100"
+                }`}
+            >
+              <DollarSign size={26} strokeWidth={pathname === "/earnings" ? 2.5 : 2} />
+              <span className="hidden xl:block text-lg">Earnings</span>
+            </Link>
+          )}
         </nav>
 
         {/* Post Button */}
