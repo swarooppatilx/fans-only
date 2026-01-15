@@ -12,7 +12,6 @@ import {
   Lock,
   MessageCircle,
   MoreHorizontal,
-  Share2,
   Sparkles,
 } from "lucide-react";
 import type { NextPage } from "next";
@@ -20,6 +19,7 @@ import { useAccount } from "wagmi";
 import { CheckBadgeIcon } from "@heroicons/react/24/outline";
 import { InlinePostComposer } from "~~/components/fansonly/InlinePostComposer";
 import { PostComments } from "~~/components/fansonly/PostComments";
+import { ShareButton } from "~~/components/fansonly/ShareButton";
 import {
   AccessLevel,
   ContentType,
@@ -281,11 +281,7 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
               <span className="font-medium">Tip</span>
             </button>
 
-            <button className="flex items-center gap-2 text-sm text-slate-500 hover:text-[#00aff0] group">
-              <div className="p-2 rounded-full group-hover:bg-[#00aff0]/10 transition-colors">
-                <Share2 size={18} />
-              </div>
-            </button>
+            <ShareButton postId={post.id.toString()} displayName={displayName} caption={post.caption} />
           </div>
 
           {/* Comments Section */}

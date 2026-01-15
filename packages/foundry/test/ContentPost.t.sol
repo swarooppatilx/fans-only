@@ -25,20 +25,19 @@ contract ContentPostTest is Test {
     string constant BANNER_CID = "QmBannerHash456";
 
     string constant CONTENT_CID = "QmContentHash789";
-    string constant PREVIEW_CID = "QmPreviewHash012";
     string constant CAPTION = "Check out my new post!";
 
     uint256 constant TIER_PRICE = 0.1 ether;
 
     event PostCreated(
-        uint256 indexed postId,
+        bytes32 indexed postId,
         address indexed creator,
         ContentPost.ContentType contentType,
         ContentPost.AccessLevel accessLevel,
         uint256 timestamp
     );
-    event PostLiked(uint256 indexed postId, address indexed user);
-    event CommentAdded(uint256 indexed postId, uint256 indexed commentId, address indexed commenter);
+    event PostLiked(bytes32 indexed postId, address indexed user);
+    event CommentAdded(bytes32 indexed postId, uint256 indexed commentId, address indexed commenter);
 
     function setUp() public {
         creatorProfile = new CreatorProfile(platformWallet);
@@ -67,44 +66,53 @@ contract ContentPostTest is Test {
 
     function test_CreatePost_Public_Success() public {
         vm.prank(creator1);
-        vm.expectEmit(true, true, false, true);
-        emit PostCreated(0, creator1, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, block.timestamp);
-
-        contentPost.createPost(
-            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
+        bytes32 postId = contentPost.createPost(
+            CONTENT_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
 
-        ContentPost.Post memory post = contentPost.getPost(0);
-        assertEq(post.id, 0);
+        ContentPost.Post memory post = contentPost.getPost(postId);
+        assertEq(post.id, postId);
         assertEq(post.creator, creator1);
         assertEq(post.contentCID, CONTENT_CID);
-        assertEq(post.previewCID, PREVIEW_CID);
         assertEq(post.caption, CAPTION);
         assertTrue(post.isActive);
     }
 
-    function test_CreatePost_SubscribersOnly_Success() public {
+    function test_CreatePost_ReturnsUniqueHashId() public {
         vm.prank(creator1);
-        contentPost.createPost(
-            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.VIDEO, ContentPost.AccessLevel.SUBSCRIBERS, 0
+        bytes32 postId = contentPost.createPost(
+            CONTENT_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
 
-        ContentPost.Post memory post = contentPost.getPost(0);
+        // Verify the ID is a hash (non-zero bytes32)
+        assertTrue(postId != bytes32(0));
+
+        // Verify it matches the expected hash
+        bytes32 expectedId = contentPost.generatePostId(creator1, CONTENT_CID, block.timestamp);
+        assertEq(postId, expectedId);
+    }
+
+    function test_CreatePost_SubscribersOnly_Success() public {
+        vm.prank(creator1);
+        bytes32 postId = contentPost.createPost(
+            CONTENT_CID, CAPTION, ContentPost.ContentType.VIDEO, ContentPost.AccessLevel.SUBSCRIBERS, 0
+        );
+
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(uint256(post.accessLevel), uint256(ContentPost.AccessLevel.SUBSCRIBERS));
     }
 
     function test_CreatePost_TierGated_Success() public {
         vm.prank(creator1);
-        contentPost.createPost(
+        bytes32 postId = contentPost.createPost(
             CONTENT_CID,
-            PREVIEW_CID,
             CAPTION,
             ContentPost.ContentType.VIDEO,
             ContentPost.AccessLevel.TIER_GATED,
             1 // Premium tier
         );
 
-        ContentPost.Post memory post = contentPost.getPost(0);
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(uint256(post.accessLevel), uint256(ContentPost.AccessLevel.TIER_GATED));
         assertEq(post.requiredTierId, 1);
     }
@@ -113,7 +121,7 @@ contract ContentPostTest is Test {
         vm.prank(subscriber1);
         vm.expectRevert(ContentPost.NotACreator.selector);
         contentPost.createPost(
-            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
+            CONTENT_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
     }
 
@@ -121,7 +129,7 @@ contract ContentPostTest is Test {
         vm.prank(creator1);
         vm.expectRevert(ContentPost.InvalidContent.selector);
         contentPost.createPost(
-            "", PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
+            "", CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
     }
 
@@ -130,7 +138,6 @@ contract ContentPostTest is Test {
         vm.expectRevert(ContentPost.InvalidTier.selector);
         contentPost.createPost(
             CONTENT_CID,
-            PREVIEW_CID,
             CAPTION,
             ContentPost.ContentType.IMAGE,
             ContentPost.AccessLevel.TIER_GATED,
@@ -141,27 +148,26 @@ contract ContentPostTest is Test {
     // ============ Access Control Tests ============
 
     function test_CanAccessPost_PublicPost_AnyoneCanAccess() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
-        assertTrue(contentPost.canAccessPost(0, creator1));
-        assertTrue(contentPost.canAccessPost(0, subscriber1));
-        assertTrue(contentPost.canAccessPost(0, nonSubscriber));
+        assertTrue(contentPost.canAccessPost(postId, creator1));
+        assertTrue(contentPost.canAccessPost(postId, subscriber1));
+        assertTrue(contentPost.canAccessPost(postId, nonSubscriber));
     }
 
     function test_CanAccessPost_SubscribersOnly_SubscriberCanAccess() public {
-        _createSubscriberPost(creator1);
+        bytes32 postId = _createSubscriberPost(creator1);
 
-        assertTrue(contentPost.canAccessPost(0, creator1));
-        assertTrue(contentPost.canAccessPost(0, subscriber1));
-        assertFalse(contentPost.canAccessPost(0, nonSubscriber));
+        assertTrue(contentPost.canAccessPost(postId, creator1));
+        assertTrue(contentPost.canAccessPost(postId, subscriber1));
+        assertFalse(contentPost.canAccessPost(postId, nonSubscriber));
     }
 
     function test_CanAccessPost_TierGated_RequiresCorrectTier() public {
         // Create premium tier-gated post (tier 1)
         vm.prank(creator1);
-        contentPost.createPost(
+        bytes32 postId = contentPost.createPost(
             CONTENT_CID,
-            PREVIEW_CID,
             CAPTION,
             ContentPost.ContentType.VIDEO,
             ContentPost.AccessLevel.TIER_GATED,
@@ -169,162 +175,157 @@ contract ContentPostTest is Test {
         );
 
         // subscriber1 is on basic tier (0), should not have access
-        assertFalse(contentPost.canAccessPost(0, subscriber1));
+        assertFalse(contentPost.canAccessPost(postId, subscriber1));
 
         // Subscribe subscriber2 to premium tier
         vm.prank(subscriber2);
         creatorProfile.subscribe{ value: TIER_PRICE * 2 }(creator1, 1);
 
         // subscriber2 on premium tier should have access
-        assertTrue(contentPost.canAccessPost(0, subscriber2));
+        assertTrue(contentPost.canAccessPost(postId, subscriber2));
     }
 
     function test_GetContentCID_HiddenIfNoAccess() public {
-        _createSubscriberPost(creator1);
+        bytes32 postId = _createSubscriberPost(creator1);
 
         // Subscriber can see content
         vm.prank(subscriber1);
-        string memory cid = contentPost.getContentCID(0);
+        string memory cid = contentPost.getContentCID(postId);
         assertEq(cid, CONTENT_CID);
 
         // Non-subscriber gets empty string
         vm.prank(nonSubscriber);
-        cid = contentPost.getContentCID(0);
+        cid = contentPost.getContentCID(postId);
         assertEq(cid, "");
     }
 
     function test_GetPost_HidesContentCIDIfNoAccess() public {
-        _createSubscriberPost(creator1);
+        bytes32 postId = _createSubscriberPost(creator1);
 
         // Non-subscriber sees empty contentCID
         vm.prank(nonSubscriber);
-        ContentPost.Post memory post = contentPost.getPost(0);
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(post.contentCID, "");
-        assertEq(post.previewCID, PREVIEW_CID); // Preview still visible
     }
 
     // ============ Like Tests ============
 
     function test_LikePost_Success() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(subscriber1);
-        vm.expectEmit(true, true, false, false);
-        emit PostLiked(0, subscriber1);
-        contentPost.likePost(0);
+        contentPost.likePost(postId);
 
-        assertTrue(contentPost.hasLiked(0, subscriber1));
-        ContentPost.Post memory post = contentPost.getPost(0);
+        assertTrue(contentPost.hasLiked(postId, subscriber1));
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(post.likesCount, 1);
     }
 
     function test_LikePost_RevertsIfAlreadyLiked() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.startPrank(subscriber1);
-        contentPost.likePost(0);
+        contentPost.likePost(postId);
 
         vm.expectRevert(ContentPost.AlreadyLiked.selector);
-        contentPost.likePost(0);
+        contentPost.likePost(postId);
         vm.stopPrank();
     }
 
     function test_LikePost_RevertsIfNoAccess() public {
-        _createSubscriberPost(creator1);
+        bytes32 postId = _createSubscriberPost(creator1);
 
         vm.prank(nonSubscriber);
         vm.expectRevert(ContentPost.AccessDenied.selector);
-        contentPost.likePost(0);
+        contentPost.likePost(postId);
     }
 
     function test_UnlikePost_Success() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.startPrank(subscriber1);
-        contentPost.likePost(0);
-        contentPost.unlikePost(0);
+        contentPost.likePost(postId);
+        contentPost.unlikePost(postId);
         vm.stopPrank();
 
-        assertFalse(contentPost.hasLiked(0, subscriber1));
-        ContentPost.Post memory post = contentPost.getPost(0);
+        assertFalse(contentPost.hasLiked(postId, subscriber1));
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(post.likesCount, 0);
     }
 
     function test_UnlikePost_RevertsIfNotLiked() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(subscriber1);
         vm.expectRevert(ContentPost.NotLiked.selector);
-        contentPost.unlikePost(0);
+        contentPost.unlikePost(postId);
     }
 
     // ============ Comment Tests ============
 
     function test_AddComment_Success() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(subscriber1);
-        vm.expectEmit(true, true, true, false);
-        emit CommentAdded(0, 0, subscriber1);
-        contentPost.addComment(0, "Great post!");
+        contentPost.addComment(postId, "Great post!");
 
-        ContentPost.Comment[] memory comments = contentPost.getPostComments(0, 0, 10);
+        ContentPost.Comment[] memory comments = contentPost.getPostComments(postId, 0, 10);
         assertEq(comments.length, 1);
         assertEq(comments[0].content, "Great post!");
         assertEq(comments[0].commenter, subscriber1);
 
-        ContentPost.Post memory post = contentPost.getPost(0);
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(post.commentsCount, 1);
     }
 
     function test_AddComment_RevertsIfNoAccess() public {
-        _createSubscriberPost(creator1);
+        bytes32 postId = _createSubscriberPost(creator1);
 
         vm.prank(nonSubscriber);
         vm.expectRevert(ContentPost.AccessDenied.selector);
-        contentPost.addComment(0, "Can't comment!");
+        contentPost.addComment(postId, "Can't comment!");
     }
 
     function test_AddComment_RevertsIfEmptyContent() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(subscriber1);
         vm.expectRevert(ContentPost.InvalidContent.selector);
-        contentPost.addComment(0, "");
+        contentPost.addComment(postId, "");
     }
 
     function test_DeleteComment_ByCommenter_Success() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(subscriber1);
-        contentPost.addComment(0, "My comment");
+        contentPost.addComment(postId, "My comment");
 
         vm.prank(subscriber1);
         contentPost.deleteComment(0);
 
-        ContentPost.Post memory post = contentPost.getPost(0);
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(post.commentsCount, 0);
     }
 
     function test_DeleteComment_ByPostOwner_Success() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(subscriber1);
-        contentPost.addComment(0, "Some comment");
+        contentPost.addComment(postId, "Some comment");
 
         // Post owner (creator1) can delete any comment
         vm.prank(creator1);
         contentPost.deleteComment(0);
 
-        ContentPost.Post memory post = contentPost.getPost(0);
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(post.commentsCount, 0);
     }
 
     function test_DeleteComment_RevertsIfNotOwner() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(subscriber1);
-        contentPost.addComment(0, "Some comment");
+        contentPost.addComment(postId, "Some comment");
 
         // subscriber2 cannot delete subscriber1's comment
         vm.prank(subscriber2);
@@ -335,43 +336,42 @@ contract ContentPostTest is Test {
     // ============ Post Management Tests ============
 
     function test_UpdatePost_Success() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(creator1);
-        contentPost.updatePost(0, "Updated caption", "QmNewPreview");
+        contentPost.updatePost(postId, "Updated caption");
 
-        ContentPost.Post memory post = contentPost.getPost(0);
+        ContentPost.Post memory post = contentPost.getPost(postId);
         assertEq(post.caption, "Updated caption");
-        assertEq(post.previewCID, "QmNewPreview");
     }
 
     function test_UpdatePost_RevertsIfNotOwner() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(subscriber1);
         vm.expectRevert(ContentPost.NotPostOwner.selector);
-        contentPost.updatePost(0, "Hacked!", "QmHacked");
+        contentPost.updatePost(postId, "Hacked!");
     }
 
     function test_DeletePost_Success() public {
-        _createPublicPost(creator1);
+        bytes32 postId = _createPublicPost(creator1);
 
         vm.prank(creator1);
-        contentPost.deletePost(0);
+        contentPost.deletePost(postId);
 
         vm.expectRevert(ContentPost.PostNotFound.selector);
-        contentPost.getPost(0);
+        contentPost.getPost(postId);
     }
 
     // ============ View Function Tests ============
 
     function test_GetCreatorPosts_Pagination() public {
-        // Create 5 posts
+        // Create 5 posts with different timestamps
         vm.startPrank(creator1);
         for (uint256 i = 0; i < 5; i++) {
+            vm.warp(block.timestamp + 1); // Ensure unique timestamps for unique IDs
             contentPost.createPost(
                 string.concat("QmContent", vm.toString(i)),
-                PREVIEW_CID,
                 string.concat("Post ", vm.toString(i)),
                 ContentPost.ContentType.IMAGE,
                 ContentPost.AccessLevel.PUBLIC,
@@ -383,8 +383,6 @@ contract ContentPostTest is Test {
         // Get first 3
         ContentPost.Post[] memory batch1 = contentPost.getCreatorPosts(creator1, 0, 3);
         assertEq(batch1.length, 3);
-        assertEq(batch1[0].id, 0);
-        assertEq(batch1[2].id, 2);
 
         // Get next 2
         ContentPost.Post[] memory batch2 = contentPost.getCreatorPosts(creator1, 3, 3);
@@ -393,24 +391,26 @@ contract ContentPostTest is Test {
 
     function test_GetCreatorPostCount() public {
         _createPublicPost(creator1);
+        vm.warp(block.timestamp + 1);
         _createPublicPost(creator1);
 
         assertEq(contentPost.getCreatorPostCount(creator1), 2);
     }
 
     function test_GetUserLikedPosts() public {
-        _createPublicPost(creator1);
-        _createPublicPost(creator1);
+        bytes32 postId1 = _createPublicPost(creator1);
+        vm.warp(block.timestamp + 1);
+        bytes32 postId2 = _createPublicPost(creator1);
 
         vm.startPrank(subscriber1);
-        contentPost.likePost(0);
-        contentPost.likePost(1);
+        contentPost.likePost(postId1);
+        contentPost.likePost(postId2);
         vm.stopPrank();
 
-        uint256[] memory liked = contentPost.getUserLikedPosts(subscriber1);
+        bytes32[] memory liked = contentPost.getUserLikedPosts(subscriber1);
         assertEq(liked.length, 2);
-        assertEq(liked[0], 0);
-        assertEq(liked[1], 1);
+        assertEq(liked[0], postId1);
+        assertEq(liked[1], postId2);
     }
 
     // ============ Admin Tests ============
@@ -421,23 +421,23 @@ contract ContentPostTest is Test {
         vm.prank(creator1);
         vm.expectRevert();
         contentPost.createPost(
-            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
+            CONTENT_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
     }
 
     // ============ Helper Functions ============
 
-    function _createPublicPost(address _creator) internal {
+    function _createPublicPost(address _creator) internal returns (bytes32) {
         vm.prank(_creator);
-        contentPost.createPost(
-            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
+        return contentPost.createPost(
+            CONTENT_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.PUBLIC, 0
         );
     }
 
-    function _createSubscriberPost(address _creator) internal {
+    function _createSubscriberPost(address _creator) internal returns (bytes32) {
         vm.prank(_creator);
-        contentPost.createPost(
-            CONTENT_CID, PREVIEW_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.SUBSCRIBERS, 0
+        return contentPost.createPost(
+            CONTENT_CID, CAPTION, ContentPost.ContentType.IMAGE, ContentPost.AccessLevel.SUBSCRIBERS, 0
         );
     }
 }

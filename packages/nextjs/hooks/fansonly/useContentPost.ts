@@ -17,9 +17,12 @@ export enum AccessLevel {
   TIER_GATED = 2,
 }
 
+// Post ID is bytes32 (hex string)
+export type PostId = `0x${string}`;
+
 // Types matching the smart contract structs
 export interface Post {
-  id: bigint;
+  id: PostId;
   creator: string;
   contentCID: string;
   caption: string;
@@ -34,7 +37,7 @@ export interface Post {
 
 export interface Comment {
   id: bigint;
-  postId: bigint;
+  postId: PostId;
   commenter: string;
   content: string;
   createdAt: bigint;
@@ -44,7 +47,7 @@ export interface Comment {
 /**
  * Hook to get a single post
  */
-export function usePost(postId: bigint | undefined) {
+export function usePost(postId: PostId | undefined) {
   const { address } = useAccount();
 
   const {
@@ -110,7 +113,7 @@ export function useCreatorPosts(creatorAddress: string | undefined, offset: numb
 /**
  * Hook to get comments for a post
  */
-export function usePostComments(postId: bigint | undefined, offset: number = 0, limit: number = 50) {
+export function usePostComments(postId: PostId | undefined, offset: number = 0, limit: number = 50) {
   const {
     data: comments,
     isLoading,
@@ -145,7 +148,7 @@ export function useUserLikedPosts() {
   });
 
   return {
-    likedPostIds: (likedPostIds as bigint[]) ?? [],
+    likedPostIds: (likedPostIds as PostId[]) ?? [],
     isLoading,
     refetch,
   };
@@ -188,7 +191,7 @@ export function useUpdatePost() {
     contractName: "ContentPost",
   });
 
-  const updatePost = async (postId: bigint, caption: string) => {
+  const updatePost = async (postId: PostId, caption: string) => {
     return writeContractAsync({
       functionName: "updatePost",
       args: [postId, caption],
@@ -211,7 +214,7 @@ export function useDeletePost() {
     contractName: "ContentPost",
   });
 
-  const deletePost = async (postId: bigint) => {
+  const deletePost = async (postId: PostId) => {
     return writeContractAsync({
       functionName: "deletePost",
       args: [postId],
@@ -234,7 +237,7 @@ export function useLikePost() {
     contractName: "ContentPost",
   });
 
-  const likePost = async (postId: bigint) => {
+  const likePost = async (postId: PostId) => {
     return writeContractAsync({
       functionName: "likePost",
       args: [postId],
@@ -257,7 +260,7 @@ export function useUnlikePost() {
     contractName: "ContentPost",
   });
 
-  const unlikePost = async (postId: bigint) => {
+  const unlikePost = async (postId: PostId) => {
     return writeContractAsync({
       functionName: "unlikePost",
       args: [postId],
@@ -280,7 +283,7 @@ export function useAddComment() {
     contractName: "ContentPost",
   });
 
-  const addComment = async (postId: bigint, content: string) => {
+  const addComment = async (postId: PostId, content: string) => {
     return writeContractAsync({
       functionName: "addComment",
       args: [postId, content],

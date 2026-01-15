@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Address } from "@scaffold-ui/components";
 import { useAccount } from "wagmi";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
-import { Comment, useAddComment, usePostComments } from "~~/hooks/fansonly/useContentPost";
+import { Comment, PostId, useAddComment, usePostComments } from "~~/hooks/fansonly/useContentPost";
 
 interface PostCommentsProps {
-  postId: bigint;
+  postId: PostId;
   isExpanded: boolean;
 }
 

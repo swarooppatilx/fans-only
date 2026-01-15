@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
-import { CheckCircleIcon, WalletIcon } from "@heroicons/react/24/outline";
-import { FileUpload } from "~~/components/FileUpload";
-import { useCurrentCreator, useRegisterCreator } from "~~/hooks/fansonly/useCreatorProfile";
+import { CameraIcon, CheckCircleIcon, WalletIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { getIpfsUrl, useCurrentCreator, useRegisterCreator } from "~~/hooks/fansonly";
+import { useIPFSUpload } from "~~/hooks/useIPFSUpload";
 
 const CreateProfilePage: NextPage = () => {
   const router = useRouter();
   const { isConnected } = useAccount();
   const { isCreator, creator, isLoading: isLoadingCreator, refetch } = useCurrentCreator();
   const { registerCreator, isPending, isSuccess } = useRegisterCreator();
+  const { upload: uploadFile, isUploading } = useIPFSUpload();
+
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -37,6 +42,28 @@ const CreateProfilePage: NextPage = () => {
       refetch();
     }
   }, [isSuccess, refetch]);
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const result = await uploadFile(file);
+      if (result?.cid) setFormData(f => ({ ...f, bannerImageCID: result.cid }));
+    } catch (error) {
+      console.error("Failed to upload banner:", error);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const result = await uploadFile(file);
+      if (result?.cid) setFormData(f => ({ ...f, profileImageCID: result.cid }));
+    } catch (error) {
+      console.error("Failed to upload avatar:", error);
+    }
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -113,118 +140,202 @@ const CreateProfilePage: NextPage = () => {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-100 mb-2">Become a Creator</h1>
-          <p className="text-slate-400 text-sm">Set up your profile and start earning from your content</p>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-[600px] bg-slate-900 rounded-2xl overflow-hidden border border-slate-800">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+          <h1 className="text-lg font-bold text-slate-100">Create your profile</h1>
+          <button
+            onClick={handleSubmit}
+            disabled={isPending || isUploading || !formData.displayName.trim() || !formData.username.trim()}
+            className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-900 font-bold text-sm rounded-full transition-colors"
+          >
+            {isPending ? "Creating..." : "Create"}
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-6">
-          {/* Profile Image Placeholder */}
-          <div className="flex justify-center">
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full bg-slate-700 border-2 border-slate-600 flex items-center justify-center text-[#00aff0] text-2xl font-bold">
-                {formData.displayName ? formData.displayName.charAt(0).toUpperCase() : "?"}
-              </div>
-            </div>
+        {/* Banner */}
+        <div className="relative h-48 bg-slate-800">
+          {formData.bannerImageCID ? (
+            <Image src={getIpfsUrl(formData.bannerImageCID)} alt="Banner" fill className="object-cover" unoptimized />
+          ) : null}
+          <div className="absolute inset-0 bg-black/40" />
+
+          {/* Banner Controls */}
+          <div className="absolute inset-0 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => bannerInputRef.current?.click()}
+              className="p-3 bg-slate-900/70 hover:bg-slate-900/90 rounded-full transition-colors"
+            >
+              <CameraIcon className="w-5 h-5 text-slate-100" />
+            </button>
+            {formData.bannerImageCID && (
+              <button
+                type="button"
+                onClick={() => setFormData(f => ({ ...f, bannerImageCID: "" }))}
+                className="p-3 bg-slate-900/70 hover:bg-slate-900/90 rounded-full transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5 text-slate-100" />
+              </button>
+            )}
           </div>
 
-          {/* Username */}
-          <div>
-            <label className="block text-sm text-slate-300 mb-1.5">Username *</label>
-            <div className="flex">
-              <span className="px-3 py-2 bg-slate-900 border border-slate-600 border-r-0 rounded-l-lg text-slate-500 text-sm">
-                @
-              </span>
+          <input ref={bannerInputRef} type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
+
+          {/* Avatar */}
+          <div className="absolute -bottom-12 left-4">
+            <div className="relative">
+              <div className="w-28 h-28 rounded-full bg-slate-700 border-4 border-slate-900 overflow-hidden">
+                {formData.profileImageCID ? (
+                  <Image
+                    src={getIpfsUrl(formData.profileImageCID)}
+                    alt="Avatar"
+                    width={112}
+                    height={112}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-[#00aff0]">
+                    {formData.displayName.charAt(0) || "?"}
+                  </div>
+                )}
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="p-2.5 bg-slate-900/70 hover:bg-slate-900/90 rounded-full transition-colors"
+                >
+                  <CameraIcon className="w-5 h-5 text-slate-100" />
+                </button>
+              </div>
               <input
-                type="text"
-                value={formData.username}
-                onChange={e => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
-                placeholder="yourname"
-                className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-r-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] text-sm"
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
               />
             </div>
-            {errors.username && <p className="text-red-400 text-xs mt-1">{errors.username}</p>}
-            <p className="text-xs text-slate-500 mt-1">This will be your unique URL</p>
           </div>
+        </div>
 
-          {/* Display Name */}
-          <div>
-            <label className="block text-sm text-slate-300 mb-1.5">Display Name *</label>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="pt-16 px-4 pb-6 space-y-5">
+          {/* Username Field */}
+          <div className="relative">
             <input
               type="text"
+              id="username"
+              value={formData.username}
+              onChange={e => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
+              placeholder=" "
+              className={`peer w-full px-3 pt-6 pb-2 bg-transparent border rounded-md text-slate-100 focus:outline-none focus:border-[#00aff0] text-base ${
+                errors.username ? "border-red-500" : "border-slate-700"
+              }`}
+            />
+            <label
+              htmlFor="username"
+              className="absolute left-3 top-2 text-xs text-slate-500 peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#00aff0] transition-all"
+            >
+              Username
+            </label>
+            {errors.username && <p className="text-red-400 text-xs mt-1">{errors.username}</p>}
+            <p className="text-xs text-slate-600 mt-1">
+              This will be your unique URL: fansonly.com/creator/{formData.username || "yourname"}
+            </p>
+          </div>
+
+          {/* Name Field */}
+          <div className="relative">
+            <input
+              type="text"
+              id="displayName"
               value={formData.displayName}
               onChange={e => setFormData({ ...formData, displayName: e.target.value })}
-              placeholder="Your Name"
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] text-sm"
+              placeholder=" "
+              className={`peer w-full px-3 pt-6 pb-2 bg-transparent border rounded-md text-slate-100 focus:outline-none focus:border-[#00aff0] text-base ${
+                errors.displayName ? "border-red-500" : "border-slate-700"
+              }`}
+              required
             />
+            <label
+              htmlFor="displayName"
+              className="absolute left-3 top-2 text-xs text-slate-500 peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#00aff0] transition-all"
+            >
+              Name
+            </label>
             {errors.displayName && <p className="text-red-400 text-xs mt-1">{errors.displayName}</p>}
           </div>
 
-          {/* Bio */}
-          <div>
-            <label className="block text-sm text-slate-300 mb-1.5">Bio</label>
+          {/* Bio Field */}
+          <div className="relative">
             <textarea
+              id="bio"
               value={formData.bio}
               onChange={e => setFormData({ ...formData, bio: e.target.value })}
-              placeholder="Tell your subscribers about yourself..."
+              placeholder=" "
               rows={3}
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] resize-none text-sm"
+              className="peer w-full px-3 pt-6 pb-2 bg-transparent border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:border-[#00aff0] resize-none text-base"
             />
-            <p className="text-xs text-slate-500 mt-1">{formData.bio.length}/500 characters</p>
+            <label
+              htmlFor="bio"
+              className="absolute left-3 top-2 text-xs text-slate-500 peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#00aff0] transition-all"
+            >
+              Bio
+            </label>
           </div>
 
-          {/* Profile Image Upload & CID */}
-          <div>
-            <FileUpload
-              label="Profile Image (IPFS upload or paste CID)"
-              accept="image/*"
-              maxSizeMB={10}
-              onUpload={cid => setFormData(f => ({ ...f, profileImageCID: cid }))}
-              onUploadingChange={() => {}}
-              showPreview={true}
-              className="mb-2"
-            />
+          {/* Profile Image CID */}
+          <div className="relative">
             <input
               type="text"
+              id="profileCID"
               value={formData.profileImageCID}
               onChange={e => setFormData({ ...formData, profileImageCID: e.target.value })}
-              placeholder="Qm... (IPFS CID)"
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] font-mono text-xs mt-2"
+              placeholder=" "
+              className="peer w-full px-3 pt-6 pb-2 bg-transparent border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:border-[#00aff0] text-sm font-mono"
             />
+            <label
+              htmlFor="profileCID"
+              className="absolute left-3 top-2 text-xs text-slate-500 peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#00aff0] transition-all"
+            >
+              Profile Image CID
+            </label>
+            <p className="text-xs text-slate-600 mt-1">Upload via camera icon or paste IPFS CID directly</p>
           </div>
 
-          {/* Banner Image Upload & CID */}
-          <div>
-            <FileUpload
-              label="Banner Image (IPFS upload or paste CID)"
-              accept="image/*"
-              maxSizeMB={20}
-              onUpload={cid => setFormData(f => ({ ...f, bannerImageCID: cid }))}
-              onUploadingChange={() => {}}
-              showPreview={true}
-              className="mb-2"
-            />
+          {/* Banner Image CID */}
+          <div className="relative">
             <input
               type="text"
+              id="bannerCID"
               value={formData.bannerImageCID}
               onChange={e => setFormData({ ...formData, bannerImageCID: e.target.value })}
-              placeholder="Qm... (IPFS CID)"
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] font-mono text-xs mt-2"
+              placeholder=" "
+              className="peer w-full px-3 pt-6 pb-2 bg-transparent border border-slate-700 rounded-md text-slate-100 focus:outline-none focus:border-[#00aff0] text-sm font-mono"
             />
+            <label
+              htmlFor="bannerCID"
+              className="absolute left-3 top-2 text-xs text-slate-500 peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-focus:top-2 peer-focus:text-xs peer-focus:text-[#00aff0] transition-all"
+            >
+              Banner Image CID
+            </label>
+            <p className="text-xs text-slate-600 mt-1">Upload via camera icon or paste IPFS CID directly</p>
           </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full py-2.5 bg-[#00aff0] hover:bg-[#009bd6] disabled:opacity-50 text-white font-medium rounded-full transition-colors"
-          >
-            {isPending ? "Creating Profile..." : "Create Profile"}
-          </button>
+          {/* Uploading indicator */}
+          {isUploading && (
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <div className="w-4 h-4 border-2 border-[#00aff0] border-t-transparent rounded-full animate-spin" />
+              <span>Uploading to IPFS...</span>
+            </div>
+          )}
 
-          <p className="text-xs text-center text-slate-500">
+          {/* Terms */}
+          <p className="text-xs text-center text-slate-600 pt-2">
             By creating a profile, you agree to our terms of service. Your profile will be stored on the blockchain.
           </p>
         </form>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,6 +17,7 @@ import {
   UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import { HomeIcon as HomeIconSolid, UserCircleIcon as UserIconSolid } from "@heroicons/react/24/solid";
+import { CreateProfileModal } from "~~/components/fansonly/CreateProfileModal";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { getIpfsUrl, useCurrentCreator } from "~~/hooks/fansonly/useCreatorProfile";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
@@ -27,7 +28,7 @@ import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
  * - Connected viewer: Feed, Explore, Become Creator, Settings
  * - Connected creator: Feed, Explore, Earnings, Profile, Settings
  */
-export const HeaderMenuLinks = () => {
+export const HeaderMenuLinks = ({ onCreateProfile }: { onCreateProfile?: () => void }) => {
   const pathname = usePathname();
   const { isConnected } = useAccount();
   const { isCreator, creator, isLoading } = useCurrentCreator();
@@ -35,7 +36,8 @@ export const HeaderMenuLinks = () => {
   // Build links based on user state
   type NavLink = {
     label: string;
-    href: string;
+    href?: string;
+    onClick?: () => void;
     icon: React.ReactNode;
     iconActive?: React.ReactNode;
   };
@@ -68,7 +70,7 @@ export const HeaderMenuLinks = () => {
     });
   }
 
-  // Profile link - different for creators vs viewers
+  // Profile link - creators only (non-creators get modal button instead)
   if (isConnected && !isLoading) {
     if (isCreator && creator?.username) {
       links.push({
@@ -77,36 +79,48 @@ export const HeaderMenuLinks = () => {
         icon: <UserCircleIcon className="h-5 w-5" />,
         iconActive: <UserIconSolid className="h-5 w-5" />,
       });
+
+      // Settings - only for creators
+      links.push({
+        label: "Settings",
+        href: "/settings",
+        icon: <Cog6ToothIcon className="h-5 w-5" />,
+      });
     } else {
-      // Show "Become Creator" for connected non-creators
+      // Show "Become Creator" button that opens modal
       links.push({
         label: "Become Creator",
-        href: "/profile/create",
+        onClick: onCreateProfile,
         icon: <UserPlusIcon className="h-5 w-5" />,
       });
     }
-
-    // Settings - requires connection
-    links.push({
-      label: "Settings",
-      href: "/settings",
-      icon: <Cog6ToothIcon className="h-5 w-5" />,
-    });
   }
 
   return (
     <>
-      {links.map(({ label, href, icon, iconActive }) => {
+      {links.map(({ label, href, onClick, icon, iconActive }) => {
         const isActive =
-          pathname === href ||
-          (label === "Profile" && pathname.startsWith("/creator/") && href.startsWith("/creator/"));
+          href &&
+          (pathname === href ||
+            (label === "Profile" && pathname.startsWith("/creator/") && href.startsWith("/creator/")));
 
         // Show creator avatar for Profile if available
         const showAvatar = label === "Profile" && isCreator && creator?.profileImageCID;
 
+        if (onClick) {
+          return (
+            <li key={label}>
+              <button onClick={onClick} className="fo-nav-link">
+                {icon}
+                <span>{label}</span>
+              </button>
+            </li>
+          );
+        }
+
         return (
           <li key={href}>
-            <Link href={href} className={`fo-nav-link ${isActive ? "active" : ""}`}>
+            <Link href={href!} className={`fo-nav-link ${isActive ? "active" : ""}`}>
               {showAvatar ? (
                 <div className="w-5 h-5 rounded-full overflow-hidden ring-2 ring-fo-primary">
                   <Image
@@ -140,6 +154,7 @@ export const Header = () => {
   const isLocalNetwork = targetNetwork.id === hardhat.id;
   const { isConnected } = useAccount();
   const { isCreator, creator } = useCurrentCreator();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const burgerMenuRef = useRef<HTMLDetailsElement>(null);
   useOutsideClick(burgerMenuRef, () => {
@@ -148,70 +163,80 @@ export const Header = () => {
 
   const profileLink = isCreator && creator?.username ? `/creator/${creator.username}` : "/profile/create";
 
+  const handleOpenCreateModal = () => {
+    burgerMenuRef?.current?.removeAttribute("open");
+    setShowCreateModal(true);
+  };
+
   return (
-    <div className="sticky top-0 navbar bg-base-100 min-h-0 shrink-0 justify-between z-20 border-b border-base-200 px-0 sm:px-2">
-      <div className="navbar-start w-auto lg:w-1/2">
-        {/* Mobile menu */}
-        <details className="dropdown" ref={burgerMenuRef}>
-          <summary className="ml-1 btn btn-ghost lg:hidden hover:bg-transparent">
-            <Bars3Icon className="h-6 w-6" />
-          </summary>
-          <ul
-            className="menu menu-compact dropdown-content mt-3 p-2 shadow-lg bg-base-100 rounded-xl w-52 border border-base-200"
-            onClick={() => burgerMenuRef?.current?.removeAttribute("open")}
-          >
-            <HeaderMenuLinks />
+    <>
+      <div className="sticky top-0 navbar bg-base-100 min-h-0 shrink-0 justify-between z-20 border-b border-base-200 px-0 sm:px-2">
+        <div className="navbar-start w-auto lg:w-1/2">
+          {/* Mobile menu */}
+          <details className="dropdown" ref={burgerMenuRef}>
+            <summary className="ml-1 btn btn-ghost lg:hidden hover:bg-transparent">
+              <Bars3Icon className="h-6 w-6" />
+            </summary>
+            <ul
+              className="menu menu-compact dropdown-content mt-3 p-2 shadow-lg bg-base-100 rounded-xl w-52 border border-base-200"
+              onClick={() => burgerMenuRef?.current?.removeAttribute("open")}
+            >
+              <HeaderMenuLinks onCreateProfile={handleOpenCreateModal} />
+            </ul>
+          </details>
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center ml-4 mr-6 shrink-0">
+            <Image src="/textlogo_white.svg" alt="FansOnly" height={32} width={120} className="h-8 w-auto" priority />
+          </Link>
+        </div>
+
+        {/* Desktop navigation */}
+        <div className="navbar-center hidden lg:flex">
+          <ul className="flex items-center gap-1">
+            <HeaderMenuLinks onCreateProfile={handleOpenCreateModal} />
           </ul>
-        </details>
+        </div>
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center ml-4 mr-6 shrink-0">
-          <Image src="/textlogo_white.svg" alt="FansOnly" height={32} width={120} className="h-8 w-auto" priority />
-        </Link>
+        {/* Right side */}
+        <div className="navbar-end grow mr-4 gap-2">
+          {/* Create Post - creators only */}
+          {isConnected && isCreator && (
+            <Link href="/create" className="btn btn-sm btn-primary gap-1" title="Create Post">
+              <PlusCircleIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Create</span>
+            </Link>
+          )}
+
+          {/* Mobile profile avatar - creators only */}
+          {isConnected && isCreator && creator && (
+            <Link href={profileLink} className="lg:hidden">
+              <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 overflow-hidden">
+                {creator.profileImageCID ? (
+                  <Image
+                    src={getIpfsUrl(creator.profileImageCID)}
+                    alt={creator.displayName}
+                    width={32}
+                    height={32}
+                    className="w-full h-full rounded-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-xs font-bold text-fo-primary">
+                    {creator.displayName?.charAt(0) || "?"}
+                  </div>
+                )}
+              </div>
+            </Link>
+          )}
+
+          <RainbowKitCustomConnectButton />
+          {isLocalNetwork && <FaucetButton />}
+        </div>
       </div>
 
-      {/* Desktop navigation */}
-      <div className="navbar-center hidden lg:flex">
-        <ul className="flex items-center gap-1">
-          <HeaderMenuLinks />
-        </ul>
-      </div>
-
-      {/* Right side */}
-      <div className="navbar-end grow mr-4 gap-2">
-        {/* Create Post - creators only */}
-        {isConnected && isCreator && (
-          <Link href="/create" className="btn btn-sm btn-primary gap-1" title="Create Post">
-            <PlusCircleIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Create</span>
-          </Link>
-        )}
-
-        {/* Mobile profile avatar - creators only */}
-        {isConnected && isCreator && creator && (
-          <Link href={profileLink} className="lg:hidden">
-            <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 overflow-hidden">
-              {creator.profileImageCID ? (
-                <Image
-                  src={getIpfsUrl(creator.profileImageCID)}
-                  alt={creator.displayName}
-                  width={32}
-                  height={32}
-                  className="w-full h-full rounded-full object-cover"
-                  unoptimized
-                />
-              ) : (
-                <div className="w-full h-full rounded-full bg-base-100 flex items-center justify-center text-xs font-bold text-fo-primary">
-                  {creator.displayName?.charAt(0) || "?"}
-                </div>
-              )}
-            </div>
-          </Link>
-        )}
-
-        <RainbowKitCustomConnectButton />
-        {isLocalNetwork && <FaucetButton />}
-      </div>
-    </div>
+      {/* Create Profile Modal */}
+      <CreateProfileModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} />
+    </>
   );
 };

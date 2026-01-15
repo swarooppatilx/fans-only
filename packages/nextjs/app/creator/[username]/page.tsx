@@ -16,10 +16,11 @@ import {
   HeartIcon,
   LockClosedIcon,
   PhotoIcon,
-  ShareIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+import { EditProfileModal } from "~~/components/fansonly/EditProfileModal";
 import { PostComments } from "~~/components/fansonly/PostComments";
+import { ShareButton } from "~~/components/fansonly/ShareButton";
 import { SubscriptionTier, getIpfsUrl, useCreatorByUsername, useSubscribe, useSubscription } from "~~/hooks/fansonly";
 import { AccessLevel, Post, useCreatorPosts, useLikePost, usePost, useUnlikePost } from "~~/hooks/fansonly";
 
@@ -213,9 +214,9 @@ const PostCard = ({
               <ChatBubbleLeftIcon className="w-5 h-5" />
               <span className="text-sm">{Number(post.commentsCount)}</span>
             </button>
-            <button className="flex items-center gap-1.5 text-slate-500 hover:text-[#00aff0] transition-colors p-2 rounded-full hover:bg-[#00aff0]/10 ml-auto">
-              <ShareIcon className="w-5 h-5" />
-            </button>
+            <div className="ml-auto">
+              <ShareButton postId={post.id} displayName={creatorName} caption={post.caption} />
+            </div>
           </div>
 
           {/* Comments Section */}
@@ -231,6 +232,7 @@ const CreatorProfilePage: NextPage = () => {
   const username = params.username as string;
   const { address: connectedAddress } = useAccount();
   const [activeTab, setActiveTab] = useState<"posts" | "media" | "about">("posts");
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const { creatorAddress, creator, tiers, isLoading: isLoadingCreator } = useCreatorByUsername(username);
   const { isSubscribed, subscription, isLoading: isLoadingSubscription } = useSubscription(creatorAddress);
@@ -340,14 +342,14 @@ const CreatorProfilePage: NextPage = () => {
           </div>
 
           {/* Action Button */}
-          <div className="pt-3">
+          <div className="pt-3 flex items-center gap-2">
             {connectedAddress === creatorAddress ? (
-              <Link
-                href="/profile/edit"
+              <button
+                onClick={() => setShowEditModal(true)}
                 className="px-4 py-1.5 border border-slate-600 hover:border-slate-500 text-slate-100 font-medium rounded-full transition-colors text-sm"
               >
                 Edit profile
-              </Link>
+              </button>
             ) : isSubscribed ? (
               <button className="px-4 py-1.5 bg-slate-700 text-slate-100 font-medium rounded-full text-sm">
                 Subscribed ✓
@@ -360,6 +362,7 @@ const CreatorProfilePage: NextPage = () => {
                 Subscribe
               </a>
             )}
+            <ShareButton username={creator.username} displayName={creator.displayName} />
           </div>
         </div>
 
@@ -549,6 +552,9 @@ const CreatorProfilePage: NextPage = () => {
           )}
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} />
     </div>
   );
 };

@@ -204,7 +204,7 @@ export function useSubscription(creatorAddress: string | undefined) {
  * Hook for creator registration
  */
 export function useRegisterCreator() {
-  const { writeContractAsync, isPending, isSuccess, error } = useScaffoldWriteContract({
+  const { writeContractAsync, isPending, isSuccess, error, reset } = useScaffoldWriteContract({
     contractName: "CreatorProfile",
   });
 
@@ -226,6 +226,7 @@ export function useRegisterCreator() {
     isPending,
     isSuccess,
     error,
+    reset,
   };
 }
 
