@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, WalletIcon } from "@heroicons/react/24/outline";
 import { FileUpload } from "~~/components/FileUpload";
 import { useCurrentCreator, useUpdateProfile } from "~~/hooks/fansonly/useCreatorProfile";
 
@@ -70,9 +70,12 @@ const EditProfilePage: NextPage = () => {
   if (!isConnected && !isConnecting) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="fo-card p-8 text-center max-w-md">
-          <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
-          <p className="text-base-content/60">Please connect your wallet to edit your profile</p>
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center max-w-md">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-slate-700 flex items-center justify-center">
+            <WalletIcon className="w-8 h-8 text-slate-400" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2 text-slate-100">Connect Your Wallet</h2>
+          <p className="text-slate-400 text-sm">Please connect your wallet to edit your profile</p>
         </div>
       </div>
     );
@@ -81,7 +84,7 @@ const EditProfilePage: NextPage = () => {
   if (isConnecting || isLoadingCreator) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg text-fo-primary"></span>
+        <div className="w-8 h-8 border-2 border-[#00aff0] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -89,11 +92,14 @@ const EditProfilePage: NextPage = () => {
   if (showSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="fo-card p-8 text-center max-w-md">
-          <CheckCircleIcon className="w-16 h-16 mx-auto mb-4 text-green-500" />
-          <h2 className="text-2xl font-bold mb-2">Profile Updated!</h2>
-          <p className="text-base-content/60 mb-6">Your changes have been saved to the blockchain.</p>
-          <button onClick={() => router.push(`/creator/${creator?.username}`)} className="fo-btn-primary">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center max-w-md">
+          <CheckCircleIcon className="w-14 h-14 mx-auto mb-4 text-emerald-400" />
+          <h2 className="text-xl font-semibold mb-2 text-slate-100">Profile Updated!</h2>
+          <p className="text-slate-400 text-sm mb-6">Your changes have been saved to the blockchain.</p>
+          <button
+            onClick={() => router.push(`/creator/${creator?.username}`)}
+            className="px-6 py-2.5 bg-[#00aff0] hover:bg-[#009bd6] text-white font-medium rounded-full transition-colors text-sm"
+          >
             View Profile
           </button>
         </div>
@@ -105,44 +111,46 @@ const EditProfilePage: NextPage = () => {
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Edit Profile</h1>
-          <button onClick={() => router.back()} className="text-base-content/60 hover:text-base-content">
+          <h1 className="text-2xl font-bold text-slate-100">Edit Profile</h1>
+          <button onClick={() => router.back()} className="text-slate-400 hover:text-slate-300 text-sm">
             Cancel
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="fo-card p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-slate-800 border border-slate-700 rounded-xl p-6 space-y-6">
           {/* Username (read-only) */}
           <div>
-            <label className="block text-sm font-medium mb-1">Username</label>
-            <div className="px-4 py-2 bg-base-300 rounded-lg text-base-content/60">@{creator?.username}</div>
-            <p className="text-xs text-base-content/50 mt-1">Username cannot be changed</p>
+            <label className="block text-sm text-slate-300 mb-1.5">Username</label>
+            <div className="px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-500 text-sm">
+              @{creator?.username}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">Username cannot be changed</p>
           </div>
 
           {/* Display Name */}
           <div>
-            <label className="block text-sm font-medium mb-1">Display Name *</label>
+            <label className="block text-sm text-slate-300 mb-1.5">Display Name *</label>
             <input
               type="text"
               value={formData.displayName}
               onChange={e => setFormData({ ...formData, displayName: e.target.value })}
               placeholder="Your Name"
-              className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] text-sm"
               required
             />
           </div>
 
           {/* Bio */}
           <div>
-            <label className="block text-sm font-medium mb-1">Bio</label>
+            <label className="block text-sm text-slate-300 mb-1.5">Bio</label>
             <textarea
               value={formData.bio}
               onChange={e => setFormData({ ...formData, bio: e.target.value })}
               placeholder="Tell your subscribers about yourself..."
               rows={4}
-              className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary resize-none"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] resize-none text-sm"
             />
-            <p className="text-xs text-base-content/50 mt-1">{formData.bio.length}/500</p>
+            <p className="text-xs text-slate-500 mt-1">{formData.bio.length}/500</p>
           </div>
 
           {/* Profile Image Upload & CID */}
@@ -161,7 +169,7 @@ const EditProfilePage: NextPage = () => {
               value={formData.profileImageCID}
               onChange={e => setFormData({ ...formData, profileImageCID: e.target.value })}
               placeholder="Qm... (IPFS CID)"
-              className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm mt-2"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] font-mono text-xs mt-2"
             />
           </div>
 
@@ -181,7 +189,7 @@ const EditProfilePage: NextPage = () => {
               value={formData.bannerImageCID}
               onChange={e => setFormData({ ...formData, bannerImageCID: e.target.value })}
               placeholder="Qm... (IPFS CID)"
-              className="w-full px-4 py-2 bg-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-fo-primary font-mono text-sm mt-2"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-[#00aff0] font-mono text-xs mt-2"
             />
           </div>
 
@@ -189,16 +197,9 @@ const EditProfilePage: NextPage = () => {
           <button
             type="submit"
             disabled={isPending || !formData.displayName.trim()}
-            className="w-full fo-btn-primary py-3"
+            className="w-full py-2.5 bg-[#00aff0] hover:bg-[#009bd6] disabled:opacity-50 text-white font-medium rounded-full transition-colors"
           >
-            {isPending ? (
-              <>
-                <span className="loading loading-spinner loading-sm"></span>
-                Saving to Blockchain...
-              </>
-            ) : (
-              "Save Changes"
-            )}
+            {isPending ? "Saving to Blockchain..." : "Save Changes"}
           </button>
         </form>
       </div>
