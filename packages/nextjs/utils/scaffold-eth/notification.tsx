@@ -1,90 +1,65 @@
 import React from "react";
-import { Toast, ToastPosition, toast } from "react-hot-toast";
-import { XMarkIcon } from "@heroicons/react/20/solid";
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-} from "@heroicons/react/24/solid";
-
-type NotificationProps = {
-  content: React.ReactNode;
-  status: "success" | "info" | "loading" | "error" | "warning";
-  duration?: number;
-  icon?: string;
-  position?: ToastPosition;
-};
+import { toast } from "sonner";
 
 type NotificationOptions = {
   duration?: number;
-  icon?: string;
-  position?: ToastPosition;
+  description?: string;
 };
 
-const ENUM_STATUSES = {
-  success: <CheckCircleIcon className="w-7 text-success" />,
-  loading: <span className="w-6 loading loading-spinner"></span>,
-  error: <ExclamationCircleIcon className="w-7 text-error" />,
-  info: <InformationCircleIcon className="w-7 text-info" />,
-  warning: <ExclamationTriangleIcon className="w-7 text-warning" />,
-};
-
-const DEFAULT_DURATION = 3000;
-const DEFAULT_POSITION: ToastPosition = "top-center";
-
-/**
- * Custom Notification
- */
-const Notification = ({
-  content,
-  status,
-  duration = DEFAULT_DURATION,
-  icon,
-  position = DEFAULT_POSITION,
-}: NotificationProps) => {
-  return toast.custom(
-    (t: Toast) => (
-      <div
-        className={`flex flex-row items-start justify-between max-w-sm rounded-xl shadow-center shadow-accent bg-base-200 p-4 transform-gpu relative transition-all duration-500 ease-in-out space-x-2
-        ${
-          position.substring(0, 3) == "top"
-            ? `hover:translate-y-1 ${t.visible ? "top-0" : "-top-96"}`
-            : `hover:-translate-y-1 ${t.visible ? "bottom-0" : "-bottom-96"}`
-        }`}
-      >
-        <div className="leading-[0] self-center">{icon ? icon : ENUM_STATUSES[status]}</div>
-        <div className={`overflow-x-hidden break-words whitespace-pre-line ${icon ? "mt-1" : ""}`}>{content}</div>
-
-        <div className={`cursor-pointer text-lg ${icon ? "mt-1" : ""}`} onClick={() => toast.dismiss(t.id)}>
-          <XMarkIcon className="w-6 cursor-pointer" onClick={() => toast.remove(t.id)} />
-        </div>
-      </div>
-    ),
-    {
-      duration: status === "loading" ? Infinity : duration,
-      position,
-    },
-  );
+// Helper function to extract text content from React nodes
+const getTextContent = (node: React.ReactNode): string => {
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node);
+  }
+  if (React.isValidElement(node)) {
+    const props = node.props as any;
+    if (props && props.children) {
+      return getTextContent(props.children);
+    }
+  }
+  if (Array.isArray(node)) {
+    return node.map(getTextContent).join(" ");
+  }
+  return "";
 };
 
 export const notification = {
   success: (content: React.ReactNode, options?: NotificationOptions) => {
-    return Notification({ content, status: "success", ...options });
+    const textContent = getTextContent(content);
+    return toast.success(textContent, {
+      duration: options?.duration,
+      description: options?.description,
+    });
   },
   info: (content: React.ReactNode, options?: NotificationOptions) => {
-    return Notification({ content, status: "info", ...options });
+    const textContent = getTextContent(content);
+    return toast.info(textContent, {
+      duration: options?.duration,
+      description: options?.description,
+    });
   },
   warning: (content: React.ReactNode, options?: NotificationOptions) => {
-    return Notification({ content, status: "warning", ...options });
+    const textContent = getTextContent(content);
+    return toast.warning(textContent, {
+      duration: options?.duration,
+      description: options?.description,
+    });
   },
   error: (content: React.ReactNode, options?: NotificationOptions) => {
-    return Notification({ content, status: "error", ...options });
+    const textContent = getTextContent(content);
+    return toast.error(textContent, {
+      duration: options?.duration,
+      description: options?.description,
+    });
   },
   loading: (content: React.ReactNode, options?: NotificationOptions) => {
-    return Notification({ content, status: "loading", ...options });
+    const textContent = getTextContent(content);
+    return toast.loading(textContent, {
+      duration: options?.duration,
+      description: options?.description,
+    });
   },
-  remove: (toastId: string) => {
-    toast.remove(toastId);
+  remove: (toastId: string | number) => {
+    toast.dismiss(toastId);
   },
 };

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { RainbowKitProvider, Theme, darkTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import { WagmiProvider } from "wagmi";
 import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
@@ -19,7 +19,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
         <main className="relative flex flex-col flex-1">{children}</main>
         <Footer />
       </div>
-      <Toaster />
+      <Toaster position="bottom-right" />
     </>
   );
 };

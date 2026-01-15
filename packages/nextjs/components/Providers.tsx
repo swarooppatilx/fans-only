@@ -5,6 +5,7 @@ import { BlockieAvatar } from "../components/scaffold-eth";
 import { wagmiConfig } from "../services/web3/wagmiConfig";
 import { RainbowKitProvider, Theme, darkTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import { WagmiProvider } from "wagmi";
 
 const queryClient = new QueryClient({
@@ -91,6 +92,7 @@ export function Providers({ children }: { children: ReactNode }) {
           showRecentTransactions={true}
         >
           {mounted && children}
+          <Toaster position="bottom-right" />
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
