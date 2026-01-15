@@ -10,11 +10,69 @@ import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 export const metadata = getMetadata({
-  title: "FansOnly | Decentralized Creator Platform",
-  description: "Support your favorite creators with cryptocurrency subscriptions on Mantle",
+  title: "FansOnly",
+  description:
+    "Support your favorite creators with cryptocurrency subscriptions on Mantle. Join the decentralized creator economy with exclusive content, direct payments, and community engagement.",
+  keywords: [
+    "FansOnly",
+    "decentralized creator platform",
+    "cryptocurrency subscriptions",
+    "Mantle blockchain",
+    "web3",
+    "creator economy",
+    "exclusive content",
+    "crypto payments",
+  ],
 });
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "FansOnly",
+    description: "Decentralized creator platform for cryptocurrency subscriptions on Mantle",
+    url: process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : `http://localhost:${process.env.PORT || 3000}`,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web Browser",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    creator: {
+      "@type": "Organization",
+      name: "Sieg Project",
+      url: "https://siegproject.com/",
+      sameAs: ["https://x.com/siegproject", "https://siegproject.com/"],
+    },
+    author: [
+      {
+        "@type": "Person",
+        name: "Swaroop Patil",
+        url: "https://x.com/swarooppatilx",
+      },
+      {
+        "@type": "Person",
+        name: "Renarin",
+        url: "https://x.com/0xrenarin",
+      },
+    ],
+    potentialAction: {
+      "@type": "UseAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: "{url}",
+      },
+      expectsAcceptanceOf: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+    },
+  };
+
   return (
     <html suppressHydrationWarning data-theme="dark">
       <head>
@@ -24,6 +82,12 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-title" content="Fans Only" />
         <link rel="manifest" href="/site.webmanifest" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
       </head>
       <body className="bg-slate-900 text-slate-100">
         <ThemeProvider enableSystem>
