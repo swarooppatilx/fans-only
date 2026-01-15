@@ -50,6 +50,8 @@ const EarningsPage: NextPage = () => {
   };
 
   const totalEarnings = Number(formatEther(creator?.totalEarnings ?? BigInt(0)));
+  const tipEarnings = Number(formatEther(creator?.tipEarnings ?? BigInt(0)));
+  const subscriptionEarnings = totalEarnings - tipEarnings;
   const netEarnings = totalEarnings * 0.95;
 
   if (!isConnected) {
@@ -157,6 +159,16 @@ const EarningsPage: NextPage = () => {
                 {totalEarnings.toFixed(4)} <span className="text-lg text-slate-400 font-normal">MNT</span>
               </p>
               <p className="text-slate-500 text-sm mt-1">≈ ${(totalEarnings * 0.5).toFixed(2)} USD</p>
+              <div className="flex gap-4 mt-2 text-sm">
+                <div>
+                  <span className="text-slate-400">Subscriptions: </span>
+                  <span className="text-slate-100 font-medium">{subscriptionEarnings.toFixed(4)} MNT</span>
+                </div>
+                <div>
+                  <span className="text-slate-400">Tips: </span>
+                  <span className="text-emerald-400 font-medium">{tipEarnings.toFixed(4)} MNT</span>
+                </div>
+              </div>
             </div>
             <div className="flex gap-4">
               <div>
@@ -177,7 +189,7 @@ const EarningsPage: NextPage = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <UserGroupIcon className="w-4 h-4 text-slate-400" />
@@ -208,6 +220,14 @@ const EarningsPage: NextPage = () => {
               <span className="text-xs text-slate-400 uppercase tracking-wide">Comments</span>
             </div>
             <p className="text-2xl font-bold text-slate-100">{totalComments.toLocaleString()}</p>
+          </div>
+
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <BanknotesIcon className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs text-slate-400 uppercase tracking-wide">Tips</span>
+            </div>
+            <p className="text-2xl font-bold text-slate-100">{tipEarnings.toFixed(4)} MNT</p>
           </div>
         </div>
 

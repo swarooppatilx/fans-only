@@ -21,6 +21,7 @@ import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
 import { EditProfileModal } from "~~/components/fansonly/EditProfileModal";
 import { PostComments } from "~~/components/fansonly/PostComments";
 import { ShareButton } from "~~/components/fansonly/ShareButton";
+import TipModal from "~~/components/fansonly/TipModal";
 import { SubscriptionTier, getIpfsUrl, useCreatorByUsername, useSubscribe, useSubscription } from "~~/hooks/fansonly";
 import { AccessLevel, Post, useCreatorPosts, useLikePost, usePost, useUnlikePost } from "~~/hooks/fansonly";
 
@@ -233,6 +234,7 @@ const CreatorProfilePage: NextPage = () => {
   const { address: connectedAddress } = useAccount();
   const [activeTab, setActiveTab] = useState<"posts" | "media" | "about">("posts");
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
 
   const { creatorAddress, creator, tiers, isLoading: isLoadingCreator } = useCreatorByUsername(username);
   const { isSubscribed, subscription, isLoading: isLoadingSubscription } = useSubscription(creatorAddress);
@@ -257,6 +259,10 @@ const CreatorProfilePage: NextPage = () => {
     } catch (error) {
       console.error("Subscription failed:", error);
     }
+  };
+
+  const handleTip = () => {
+    setShowTipModal(true);
   };
 
   const formatJoinDate = (timestamp: bigint) => {
@@ -341,26 +347,36 @@ const CreatorProfilePage: NextPage = () => {
             </div>
           </div>
 
-          {/* Action Button */}
-          <div className="pt-3 flex items-center gap-2">
+          {/* Action Buttons */}
+          <div className="pt-3 flex gap-2">
             {connectedAddress === creatorAddress ? (
-              <button
-                onClick={() => setShowEditModal(true)}
+              <Link
+                href="/profile/edit"
                 className="px-4 py-1.5 border border-slate-600 hover:border-slate-500 text-slate-100 font-medium rounded-full transition-colors text-sm"
               >
                 Edit profile
-              </button>
-            ) : isSubscribed ? (
-              <button className="px-4 py-1.5 bg-slate-700 text-slate-100 font-medium rounded-full text-sm">
-                Subscribed ✓
-              </button>
+              </Link>
             ) : (
-              <a
-                href="#tiers"
-                className="px-4 py-1.5 bg-[#00aff0] hover:bg-[#009bd6] text-white font-medium rounded-full transition-colors text-sm"
-              >
-                Subscribe
-              </a>
+              <>
+                {isSubscribed ? (
+                  <button className="px-4 py-1.5 bg-slate-700 text-slate-100 font-medium rounded-full text-sm">
+                    Subscribed ✓
+                  </button>
+                ) : (
+                  <a
+                    href="#tiers"
+                    className="px-4 py-1.5 bg-[#00aff0] hover:bg-[#009bd6] text-white font-medium rounded-full transition-colors text-sm"
+                  >
+                    Subscribe
+                  </a>
+                )}
+                <button
+                  onClick={handleTip}
+                  className="px-4 py-1.5 border border-[#00aff0] hover:bg-[#00aff0]/10 text-[#00aff0] font-medium rounded-full transition-colors text-sm"
+                >
+                  Tip Creator
+                </button>
+              </>
             )}
             <ShareButton username={creator.username} displayName={creator.displayName} />
           </div>
@@ -555,6 +571,21 @@ const CreatorProfilePage: NextPage = () => {
 
       {/* Edit Profile Modal */}
       <EditProfileModal isOpen={showEditModal} onClose={() => setShowEditModal(false)} />
+
+      {/* Tip Modal */}
+      {creator && (
+        <TipModal
+          isOpen={showTipModal}
+          onClose={() => setShowTipModal(false)}
+          creatorName={creator.displayName}
+          creatorHandle={creator.username}
+          creatorAvatar={creator.profileImageCID}
+          creatorAddress={creatorAddress || ""}
+          onTipSuccess={() => {
+            // Could add a success toast or animation here
+          }}
+        />
+      )}
     </div>
   );
 };

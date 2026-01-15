@@ -29,6 +29,7 @@ contract CreatorProfileTest is Test {
     event Subscribed(
         address indexed subscriber, address indexed creator, uint256 tierId, uint256 price, uint256 endTime
     );
+    event Tipped(address indexed tipper, address indexed creator, uint256 amount, uint256 platformFee);
 
     function setUp() public {
         creatorProfile = new CreatorProfile(platformWallet);
@@ -256,6 +257,54 @@ contract CreatorProfileTest is Test {
         vm.prank(subscriber1);
         vm.expectRevert(CreatorProfile.NotSubscribed.selector);
         creatorProfile.renewSubscription{ value: TIER_PRICE }(creator1);
+    }
+
+    // ============ Tip Tests ============
+
+    function test_TipCreator_Success() public {
+        _registerCreator(creator1, USERNAME);
+
+        uint256 tipAmount = 0.05 ether;
+        uint256 creatorBalanceBefore = creator1.balance;
+        uint256 platformBalanceBefore = platformWallet.balance;
+        CreatorProfile.Creator memory creatorBefore = creatorProfile.getCreator(creator1);
+
+        vm.prank(subscriber1);
+        vm.expectEmit(true, true, false, true);
+        emit Tipped(subscriber1, creator1, tipAmount, (tipAmount * 5) / 100);
+        creatorProfile.tipCreator{ value: tipAmount }(creator1);
+
+        // Check payments (5% platform fee)
+        uint256 platformFee = (tipAmount * 5) / 100;
+        uint256 creatorAmount = tipAmount - platformFee;
+        assertEq(creator1.balance, creatorBalanceBefore + creatorAmount);
+        assertEq(platformWallet.balance, platformBalanceBefore + platformFee);
+
+        // Check creator earnings updated
+        CreatorProfile.Creator memory creatorAfter = creatorProfile.getCreator(creator1);
+        assertEq(creatorAfter.totalEarnings, creatorBefore.totalEarnings + creatorAmount);
+    }
+
+    function test_TipCreator_RevertsIfZeroAmount() public {
+        _registerCreator(creator1, USERNAME);
+
+        vm.prank(subscriber1);
+        vm.expectRevert(CreatorProfile.InsufficientPayment.selector);
+        creatorProfile.tipCreator{ value: 0 }(creator1);
+    }
+
+    function test_TipCreator_RevertsIfInvalidCreator() public {
+        vm.prank(subscriber1);
+        vm.expectRevert(CreatorProfile.NotACreator.selector);
+        creatorProfile.tipCreator{ value: 0.01 ether }(creator1);
+    }
+
+    function test_TipCreator_RevertsIfSelfTipping() public {
+        _registerCreator(creator1, USERNAME);
+
+        vm.prank(creator1);
+        vm.expectRevert(CreatorProfile.CannotTipYourself.selector);
+        creatorProfile.tipCreator{ value: 0.01 ether }(creator1);
     }
 
     // ============ View Function Tests ============

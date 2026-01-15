@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     CreatorProfile: {
-      address: "0xb19b36b1456e65e3a6d514d3f715f204bd59f431",
+      address: "0x700b6a60ce7eaaea56f065753d8dcb9653dbad35",
       abi: [
         {
           type: "constructor",
@@ -201,6 +201,11 @@ const deployedContracts = {
               type: "uint256",
               internalType: "uint256",
             },
+            {
+              name: "tipEarnings",
+              type: "uint256",
+              internalType: "uint256",
+            },
           ],
           stateMutability: "view",
         },
@@ -280,6 +285,11 @@ const deployedContracts = {
                 },
                 {
                   name: "totalEarnings",
+                  type: "uint256",
+                  internalType: "uint256",
+                },
+                {
+                  name: "tipEarnings",
                   type: "uint256",
                   internalType: "uint256",
                 },
@@ -629,6 +639,19 @@ const deployedContracts = {
             },
           ],
           stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "tipCreator",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [],
+          stateMutability: "payable",
         },
         {
           type: "function",
@@ -1029,6 +1052,37 @@ const deployedContracts = {
         },
         {
           type: "event",
+          name: "Tipped",
+          inputs: [
+            {
+              name: "tipper",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "creator",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "amount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "platformFee",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
           name: "Unpaused",
           inputs: [
             {
@@ -1048,6 +1102,11 @@ const deployedContracts = {
         {
           type: "error",
           name: "AlreadySubscribed",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "CannotTipYourself",
           inputs: [],
         },
         {
@@ -1139,10 +1198,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 26,
+      deployedOnBlock: 1,
     },
     ContentPost: {
-      address: "0x8ce361602b935680e8dec218b820ff5056beb7af",
+      address: "0xa15bb66138824a1c7167f5e85b957d04dd34e468",
       abi: [
         {
           type: "constructor",
@@ -2275,7 +2334,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 26,
+      deployedOnBlock: 2,
     },
   },
 } as const;
