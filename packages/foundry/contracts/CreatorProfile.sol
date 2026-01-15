@@ -29,6 +29,7 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
         uint256 createdAt;
         uint256 totalSubscribers;
         uint256 totalEarnings;
+        uint256 tipEarnings;
     }
 
     struct SubscriptionTier {
@@ -68,6 +69,7 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
     event SubscriptionCancelled(address indexed subscriber, address indexed creator);
     event CreatorVerified(address indexed creator);
     event PlatformWalletUpdated(address indexed oldWallet, address indexed newWallet);
+    event Tipped(address indexed tipper, address indexed creator, uint256 amount, uint256 platformFee);
 
     // ============ Errors ============
     error NotACreator();
@@ -80,6 +82,7 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
     error AlreadySubscribed();
     error NotSubscribed();
     error InsufficientPayment();
+    error CannotTipYourself();
     error TransferFailed();
     error InvalidAddress();
 
@@ -131,7 +134,8 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
             isActive: true,
             createdAt: block.timestamp,
             totalSubscribers: 0,
-            totalEarnings: 0
+            totalEarnings: 0,
+            tipEarnings: 0
         });
 
         isCreator[msg.sender] = true;
@@ -296,6 +300,32 @@ contract CreatorProfile is Ownable, ReentrancyGuard, Pausable {
         if (!successPlatform) revert TransferFailed();
 
         emit SubscriptionRenewed(msg.sender, _creator, sub.tierId, sub.endTime);
+    }
+
+    /**
+     * @notice Tip a creator
+     * @param _creator Creator address to tip
+     */
+    function tipCreator(address _creator) external payable nonReentrant whenNotPaused validCreator(_creator) {
+        if (msg.value == 0) revert InsufficientPayment();
+        if (msg.sender == _creator) revert CannotTipYourself();
+
+        // Calculate fees
+        uint256 platformFee = (msg.value * PLATFORM_FEE_PERCENT) / 100;
+        uint256 creatorAmount = msg.value - platformFee;
+
+        // Update creator earnings
+        creators[_creator].totalEarnings += creatorAmount;
+        creators[_creator].tipEarnings += creatorAmount;
+
+        // Transfer funds
+        (bool successCreator,) = payable(_creator).call{ value: creatorAmount }("");
+        if (!successCreator) revert TransferFailed();
+
+        (bool successPlatform,) = payable(platformWallet).call{ value: platformFee }("");
+        if (!successPlatform) revert TransferFailed();
+
+        emit Tipped(msg.sender, _creator, msg.value, platformFee);
     }
 
     // ============ View Functions ============

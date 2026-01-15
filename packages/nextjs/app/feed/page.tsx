@@ -20,6 +20,7 @@ import { CheckBadgeIcon } from "@heroicons/react/24/outline";
 import { InlinePostComposer } from "~~/components/fansonly/InlinePostComposer";
 import { PostComments } from "~~/components/fansonly/PostComments";
 import { ShareButton } from "~~/components/fansonly/ShareButton";
+import TipModal from "~~/components/fansonly/TipModal";
 import {
   AccessLevel,
   ContentType,
@@ -120,6 +121,7 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
   const [localLiked, setLocalLiked] = useState(hasLiked);
   const [localLikeCount, setLocalLikeCount] = useState(Number(post.likesCount));
   const [showComments, setShowComments] = useState(false);
+  const [showTipModal, setShowTipModal] = useState(false);
 
   // Fetch the post with the connected user's address for access control (profile logic)
   const { post: userPost, canAccess } = usePost(post.id);
@@ -151,6 +153,10 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
       setLocalLiked(true);
       setLocalLikeCount(prev => prev + 1);
     }
+  };
+
+  const handleTip = async () => {
+    setShowTipModal(true);
   };
 
   const username = post.creatorData?.username || post.creator.slice(0, 8);
@@ -274,7 +280,10 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
               <span className="font-medium">{Number(post.commentsCount)}</span>
             </button>
 
-            <button className="flex items-center gap-2 text-sm text-slate-500 hover:text-emerald-500 group">
+            <button
+              onClick={handleTip}
+              className="flex items-center gap-2 text-sm text-slate-500 hover:text-emerald-500 group"
+            >
               <div className="p-2 rounded-full group-hover:bg-emerald-500/10 transition-colors">
                 <DollarSign size={18} />
               </div>
@@ -288,6 +297,19 @@ function PostCard({ post, isSubscribed, subscribedTierId, hasLiked, onLike, onUn
           <PostComments postId={post.id} isExpanded={showComments} />
         </div>
       </div>
+
+      {/* Tip Modal */}
+      <TipModal
+        isOpen={showTipModal}
+        onClose={() => setShowTipModal(false)}
+        creatorName={displayName}
+        creatorHandle={username}
+        creatorAvatar={post.creatorData?.profileImageCID}
+        creatorAddress={post.creator}
+        onTipSuccess={() => {
+          // Could add a success toast or animation here
+        }}
+      />
     </div>
   );
 }

@@ -13,6 +13,7 @@ export interface Creator {
   createdAt: bigint;
   totalSubscribers: bigint;
   totalEarnings: bigint;
+  tipEarnings: bigint;
 }
 
 export interface SubscriptionTier {
@@ -319,6 +320,30 @@ export function useRenewSubscription() {
 
   return {
     renewSubscription,
+    isPending,
+    isSuccess,
+    error,
+  };
+}
+
+/**
+ * Hook for tipping a creator
+ */
+export function useTipCreator() {
+  const { writeContractAsync, isPending, isSuccess, error } = useScaffoldWriteContract({
+    contractName: "CreatorProfile",
+  });
+
+  const tipCreator = async (creatorAddress: string, amountInWei: bigint) => {
+    return writeContractAsync({
+      functionName: "tipCreator",
+      args: [creatorAddress],
+      value: amountInWei,
+    });
+  };
+
+  return {
+    tipCreator,
     isPending,
     isSuccess,
     error,
