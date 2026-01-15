@@ -1,5 +1,26 @@
 {
-  "name": "Scaffold-ETH 2 DApp",
-  "description": "A DApp built with Scaffold-ETH",
-  "iconPath": "logo.svg"
+  "name": "FansOnly - Decentralized Creator Platform",
+  "short_name": "FansOnly",
+  "description": "Support your favorite creators with cryptocurrency subscriptions on Mantle. Join the decentralized creator economy.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#00aff0",
+  "orientation": "portrait-primary",
+  "categories": ["entertainment", "social", "finance"],
+  "lang": "en-US",
+  "icons": [
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
 }
