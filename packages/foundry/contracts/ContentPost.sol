@@ -10,7 +10,7 @@ import "./CreatorProfile.sol";
  * @title ContentPost
  * @author FansOnly Team
  * @notice Contract for managing creator content posts with tier-based access control
- * @dev Integrates with CreatorProfile for subscription verification
+ * @dev Integrates with CreatorProfile for subscription verification. Uses bytes32 hash IDs.
  */
 contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     // ============ Constants ============
@@ -33,7 +33,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
 
     // ============ Structs ============
     struct Post {
-        uint256 id;
+        bytes32 id;
         address creator;
         string contentCID; // IPFS CID for encrypted content
         string caption;
@@ -48,7 +48,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
 
     struct Comment {
         uint256 id;
-        uint256 postId;
+        bytes32 postId;
         address commenter;
         string content;
         uint256 createdAt;
@@ -58,30 +58,30 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     // ============ State Variables ============
     CreatorProfile public immutable creatorProfile;
 
-    uint256 public nextPostId;
     uint256 public nextCommentId;
+    uint256 public totalPosts;
 
-    mapping(uint256 => Post) public posts;
-    mapping(address => uint256[]) public creatorPosts; // creator => postIds
-    mapping(uint256 => uint256[]) public postComments; // postId => commentIds
+    mapping(bytes32 => Post) public posts;
+    mapping(address => bytes32[]) public creatorPosts; // creator => postIds
+    mapping(bytes32 => uint256[]) public postComments; // postId => commentIds
     mapping(uint256 => Comment) public comments;
-    mapping(uint256 => mapping(address => bool)) public postLikes; // postId => user => liked
-    mapping(address => uint256[]) public userLikedPosts; // user => likedPostIds
+    mapping(bytes32 => mapping(address => bool)) public postLikes; // postId => user => liked
+    mapping(address => bytes32[]) public userLikedPosts; // user => likedPostIds
 
     // ============ Events ============
     event PostCreated(
-        uint256 indexed postId,
+        bytes32 indexed postId,
         address indexed creator,
         ContentType contentType,
         AccessLevel accessLevel,
         uint256 timestamp
     );
-    event PostUpdated(uint256 indexed postId, address indexed creator);
-    event PostDeleted(uint256 indexed postId, address indexed creator);
-    event PostLiked(uint256 indexed postId, address indexed user);
-    event PostUnliked(uint256 indexed postId, address indexed user);
-    event CommentAdded(uint256 indexed postId, uint256 indexed commentId, address indexed commenter);
-    event CommentDeleted(uint256 indexed postId, uint256 indexed commentId);
+    event PostUpdated(bytes32 indexed postId, address indexed creator);
+    event PostDeleted(bytes32 indexed postId, address indexed creator);
+    event PostLiked(bytes32 indexed postId, address indexed user);
+    event PostUnliked(bytes32 indexed postId, address indexed user);
+    event CommentAdded(bytes32 indexed postId, uint256 indexed commentId, address indexed commenter);
+    event CommentDeleted(bytes32 indexed postId, uint256 indexed commentId);
 
     // ============ Errors ============
     error NotACreator();
@@ -94,6 +94,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     error AlreadyLiked();
     error NotLiked();
     error InvalidTier();
+    error PostAlreadyExists();
 
     // ============ Modifiers ============
     modifier onlyCreator() {
@@ -101,12 +102,12 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
         _;
     }
 
-    modifier postExists(uint256 _postId) {
-        if (_postId >= nextPostId || !posts[_postId].isActive) revert PostNotFound();
+    modifier postExists(bytes32 _postId) {
+        if (!posts[_postId].isActive) revert PostNotFound();
         _;
     }
 
-    modifier onlyPostOwner(uint256 _postId) {
+    modifier onlyPostOwner(bytes32 _postId) {
         if (posts[_postId].creator != msg.sender) revert NotPostOwner();
         _;
     }
@@ -117,6 +118,17 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
     }
 
     // ============ Post Management ============
+
+    /**
+     * @notice Generate a unique post ID hash
+     * @param _creator Creator address
+     * @param _contentCID Content IPFS CID
+     * @param _timestamp Creation timestamp
+     * @return bytes32 Unique post ID hash
+     */
+    function generatePostId(address _creator, string calldata _contentCID, uint256 _timestamp) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_creator, _contentCID, _timestamp));
+    }
 
     /**
      * @notice Create a new post
@@ -132,7 +144,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
         ContentType _contentType,
         AccessLevel _accessLevel,
         uint256 _requiredTierId
-    ) external onlyCreator whenNotPaused {
+    ) external onlyCreator whenNotPaused returns (bytes32) {
         if (bytes(_contentCID).length == 0) revert InvalidContent();
 
         // Validate tier if tier-gated
@@ -141,7 +153,10 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
             if (_requiredTierId >= tiers.length) revert InvalidTier();
         }
 
-        uint256 postId = nextPostId++;
+        bytes32 postId = generatePostId(msg.sender, _contentCID, block.timestamp);
+        
+        // Ensure unique ID (extremely unlikely collision, but check anyway)
+        if (posts[postId].createdAt != 0) revert PostAlreadyExists();
 
         posts[postId] = Post({
             id: postId,
@@ -158,8 +173,11 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
         });
 
         creatorPosts[msg.sender].push(postId);
+        totalPosts++;
 
         emit PostCreated(postId, msg.sender, _contentType, _accessLevel, block.timestamp);
+        
+        return postId;
     }
 
     /**
@@ -167,7 +185,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _postId Post ID to update
      * @param _caption New caption
      */
-    function updatePost(uint256 _postId, string calldata _caption)
+    function updatePost(bytes32 _postId, string calldata _caption)
         external
         postExists(_postId)
         onlyPostOwner(_postId)
@@ -183,7 +201,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @notice Delete a post (soft delete)
      * @param _postId Post ID to delete
      */
-    function deletePost(uint256 _postId) external postExists(_postId) onlyPostOwner(_postId) {
+    function deletePost(bytes32 _postId) external postExists(_postId) onlyPostOwner(_postId) {
         posts[_postId].isActive = false;
         emit PostDeleted(_postId, msg.sender);
     }
@@ -194,7 +212,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @notice Like a post
      * @param _postId Post ID to like
      */
-    function likePost(uint256 _postId) external postExists(_postId) whenNotPaused {
+    function likePost(bytes32 _postId) external postExists(_postId) whenNotPaused {
         if (postLikes[_postId][msg.sender]) revert AlreadyLiked();
 
         // Check access before allowing like
@@ -211,14 +229,14 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @notice Unlike a post
      * @param _postId Post ID to unlike
      */
-    function unlikePost(uint256 _postId) external postExists(_postId) whenNotPaused {
+    function unlikePost(bytes32 _postId) external postExists(_postId) whenNotPaused {
         if (!postLikes[_postId][msg.sender]) revert NotLiked();
 
         postLikes[_postId][msg.sender] = false;
         posts[_postId].likesCount--;
 
         // Remove from userLikedPosts (gas expensive, but maintains data integrity)
-        uint256[] storage liked = userLikedPosts[msg.sender];
+        bytes32[] storage liked = userLikedPosts[msg.sender];
         for (uint256 i = 0; i < liked.length; i++) {
             if (liked[i] == _postId) {
                 liked[i] = liked[liked.length - 1];
@@ -235,7 +253,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _postId Post ID to comment on
      * @param _content Comment content
      */
-    function addComment(uint256 _postId, string calldata _content) external postExists(_postId) whenNotPaused {
+    function addComment(bytes32 _postId, string calldata _content) external postExists(_postId) whenNotPaused {
         if (bytes(_content).length == 0) revert InvalidContent();
         if (!canAccessPost(_postId, msg.sender)) revert AccessDenied();
 
@@ -283,7 +301,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _user User address to check
      * @return bool True if user has access
      */
-    function canAccessPost(uint256 _postId, address _user) public view returns (bool) {
+    function canAccessPost(bytes32 _postId, address _user) public view returns (bool) {
         Post storage post = posts[_postId];
 
         // Creator always has access
@@ -310,7 +328,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _postId Post ID
      * @return contentCID The IPFS CID (empty if no access)
      */
-    function getContentCID(uint256 _postId) external view postExists(_postId) returns (string memory) {
+    function getContentCID(bytes32 _postId) external view postExists(_postId) returns (string memory) {
         if (!canAccessPost(_postId, msg.sender)) return "";
         return posts[_postId].contentCID;
     }
@@ -322,7 +340,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _postId Post ID
      * @return Post struct (contentCID empty if no access)
      */
-    function getPost(uint256 _postId) external view postExists(_postId) returns (Post memory) {
+    function getPost(bytes32 _postId) external view postExists(_postId) returns (Post memory) {
         Post memory post = posts[_postId];
 
         // Hide content CID if no access
@@ -338,7 +356,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _creator Creator address
      * @return Array of post IDs
      */
-    function getCreatorPostIds(address _creator) external view returns (uint256[] memory) {
+    function getCreatorPostIds(address _creator) external view returns (bytes32[] memory) {
         return creatorPosts[_creator];
     }
 
@@ -350,7 +368,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @return Array of Post structs
      */
     function getCreatorPosts(address _creator, uint256 _offset, uint256 _limit) external view returns (Post[] memory) {
-        uint256[] storage postIds = creatorPosts[_creator];
+        bytes32[] storage postIds = creatorPosts[_creator];
         uint256 total = postIds.length;
 
         if (_offset >= total) {
@@ -382,7 +400,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _limit Number of comments to return
      * @return Array of Comment structs
      */
-    function getPostComments(uint256 _postId, uint256 _offset, uint256 _limit)
+    function getPostComments(bytes32 _postId, uint256 _offset, uint256 _limit)
         external
         view
         postExists(_postId)
@@ -414,7 +432,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _user User address
      * @return bool True if liked
      */
-    function hasLiked(uint256 _postId, address _user) external view returns (bool) {
+    function hasLiked(bytes32 _postId, address _user) external view returns (bool) {
         return postLikes[_postId][_user];
     }
 
@@ -423,7 +441,7 @@ contract ContentPost is Ownable, ReentrancyGuard, Pausable {
      * @param _user User address
      * @return Array of post IDs
      */
-    function getUserLikedPosts(address _user) external view returns (uint256[] memory) {
+    function getUserLikedPosts(address _user) external view returns (bytes32[] memory) {
         return userLikedPosts[_user];
     }
 

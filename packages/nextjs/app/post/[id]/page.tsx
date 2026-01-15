@@ -9,10 +9,12 @@ import { ArrowLeft, Heart, MessageCircle, MoreHorizontal, Share2 } from "lucide-
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { CheckBadgeIcon } from "@heroicons/react/24/outline";
+import { ShareButton } from "~~/components/fansonly/ShareButton";
 import {
   AccessLevel,
   Comment,
   ContentType,
+  PostId,
   useAddComment,
   useLikePost,
   usePost,
@@ -24,7 +26,7 @@ import { getIpfsUrl, useCreator } from "~~/hooks/fansonly/useCreatorProfile";
 const PostDetailPage: NextPage = () => {
   const params = useParams();
   const router = useRouter();
-  const postId = params.id ? BigInt(params.id as string) : undefined;
+  const postId = params.id ? (params.id as PostId) : undefined;
 
   const { address } = useAccount();
   const { post, hasLiked, canAccess, isLoading: isLoadingPost, refetch: refetchPost } = usePost(postId);
@@ -230,9 +232,11 @@ const PostDetailPage: NextPage = () => {
           <button className="flex items-center gap-2 p-2 rounded-full text-slate-500 hover:text-[#00aff0] transition-colors">
             <MessageCircle size={22} />
           </button>
-          <button className="flex items-center gap-2 p-2 rounded-full text-slate-500 hover:text-[#00aff0] transition-colors">
-            <Share2 size={22} />
-          </button>
+          <ShareButton
+            postId={postId}
+            displayName={creator?.displayName || creator?.username}
+            caption={post?.caption}
+          />
         </div>
       </div>
 

@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     CreatorProfile: {
-      address: "0x700b6a60ce7eaaea56f065753d8dcb9653dbad35",
+      address: "0xb19b36b1456e65e3a6d514d3f715f204bd59f431",
       abi: [
         {
           type: "constructor",
@@ -1139,10 +1139,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 5,
+      deployedOnBlock: 26,
     },
     ContentPost: {
-      address: "0xa15bb66138824a1c7167f5e85b957d04dd34e468",
+      address: "0x8ce361602b935680e8dec218b820ff5056beb7af",
       abi: [
         {
           type: "constructor",
@@ -1174,8 +1174,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "_content",
@@ -1192,8 +1192,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "_user",
@@ -1228,8 +1228,8 @@ const deployedContracts = {
             },
             {
               name: "postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "commenter",
@@ -1284,7 +1284,13 @@ const deployedContracts = {
               internalType: "uint256",
             },
           ],
-          outputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "bytes32",
+              internalType: "bytes32",
+            },
+          ],
           stateMutability: "nonpayable",
         },
         {
@@ -1305,8 +1311,8 @@ const deployedContracts = {
           outputs: [
             {
               name: "",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           stateMutability: "view",
@@ -1343,8 +1349,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           outputs: [],
@@ -1352,12 +1358,41 @@ const deployedContracts = {
         },
         {
           type: "function",
+          name: "generatePostId",
+          inputs: [
+            {
+              name: "_creator",
+              type: "address",
+              internalType: "address",
+            },
+            {
+              name: "_contentCID",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "_timestamp",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "bytes32",
+              internalType: "bytes32",
+            },
+          ],
+          stateMutability: "pure",
+        },
+        {
+          type: "function",
           name: "getContentCID",
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           outputs: [
@@ -1401,8 +1436,8 @@ const deployedContracts = {
           outputs: [
             {
               name: "",
-              type: "uint256[]",
-              internalType: "uint256[]",
+              type: "bytes32[]",
+              internalType: "bytes32[]",
             },
           ],
           stateMutability: "view",
@@ -1435,8 +1470,8 @@ const deployedContracts = {
               components: [
                 {
                   name: "id",
-                  type: "uint256",
-                  internalType: "uint256",
+                  type: "bytes32",
+                  internalType: "bytes32",
                 },
                 {
                   name: "creator",
@@ -1499,8 +1534,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           outputs: [
@@ -1511,8 +1546,8 @@ const deployedContracts = {
               components: [
                 {
                   name: "id",
-                  type: "uint256",
-                  internalType: "uint256",
+                  type: "bytes32",
+                  internalType: "bytes32",
                 },
                 {
                   name: "creator",
@@ -1575,8 +1610,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "_offset",
@@ -1602,8 +1637,8 @@ const deployedContracts = {
                 },
                 {
                   name: "postId",
-                  type: "uint256",
-                  internalType: "uint256",
+                  type: "bytes32",
+                  internalType: "bytes32",
                 },
                 {
                   name: "commenter",
@@ -1643,8 +1678,8 @@ const deployedContracts = {
           outputs: [
             {
               name: "",
-              type: "uint256[]",
-              internalType: "uint256[]",
+              type: "bytes32[]",
+              internalType: "bytes32[]",
             },
           ],
           stateMutability: "view",
@@ -1655,8 +1690,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "_user",
@@ -1679,8 +1714,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           outputs: [],
@@ -1689,19 +1724,6 @@ const deployedContracts = {
         {
           type: "function",
           name: "nextCommentId",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
-          name: "nextPostId",
           inputs: [],
           outputs: [
             {
@@ -1751,8 +1773,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "",
@@ -1775,8 +1797,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "",
@@ -1799,15 +1821,15 @@ const deployedContracts = {
           inputs: [
             {
               name: "",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           outputs: [
             {
               name: "id",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "creator",
@@ -1871,6 +1893,19 @@ const deployedContracts = {
         },
         {
           type: "function",
+          name: "totalPosts",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
           name: "transferOwnership",
           inputs: [
             {
@@ -1888,8 +1923,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           outputs: [],
@@ -1908,8 +1943,8 @@ const deployedContracts = {
           inputs: [
             {
               name: "_postId",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
             {
               name: "_caption",
@@ -1938,8 +1973,8 @@ const deployedContracts = {
           outputs: [
             {
               name: "",
-              type: "uint256",
-              internalType: "uint256",
+              type: "bytes32",
+              internalType: "bytes32",
             },
           ],
           stateMutability: "view",
@@ -1950,9 +1985,9 @@ const deployedContracts = {
           inputs: [
             {
               name: "postId",
-              type: "uint256",
+              type: "bytes32",
               indexed: true,
-              internalType: "uint256",
+              internalType: "bytes32",
             },
             {
               name: "commentId",
@@ -1975,9 +2010,9 @@ const deployedContracts = {
           inputs: [
             {
               name: "postId",
-              type: "uint256",
+              type: "bytes32",
               indexed: true,
-              internalType: "uint256",
+              internalType: "bytes32",
             },
             {
               name: "commentId",
@@ -2026,9 +2061,9 @@ const deployedContracts = {
           inputs: [
             {
               name: "postId",
-              type: "uint256",
+              type: "bytes32",
               indexed: true,
-              internalType: "uint256",
+              internalType: "bytes32",
             },
             {
               name: "creator",
@@ -2063,9 +2098,9 @@ const deployedContracts = {
           inputs: [
             {
               name: "postId",
-              type: "uint256",
+              type: "bytes32",
               indexed: true,
-              internalType: "uint256",
+              internalType: "bytes32",
             },
             {
               name: "creator",
@@ -2082,9 +2117,9 @@ const deployedContracts = {
           inputs: [
             {
               name: "postId",
-              type: "uint256",
+              type: "bytes32",
               indexed: true,
-              internalType: "uint256",
+              internalType: "bytes32",
             },
             {
               name: "user",
@@ -2101,9 +2136,9 @@ const deployedContracts = {
           inputs: [
             {
               name: "postId",
-              type: "uint256",
+              type: "bytes32",
               indexed: true,
-              internalType: "uint256",
+              internalType: "bytes32",
             },
             {
               name: "user",
@@ -2120,9 +2155,9 @@ const deployedContracts = {
           inputs: [
             {
               name: "postId",
-              type: "uint256",
+              type: "bytes32",
               indexed: true,
-              internalType: "uint256",
+              internalType: "bytes32",
             },
             {
               name: "creator",
@@ -2225,6 +2260,11 @@ const deployedContracts = {
         },
         {
           type: "error",
+          name: "PostAlreadyExists",
+          inputs: [],
+        },
+        {
+          type: "error",
           name: "PostNotFound",
           inputs: [],
         },
@@ -2235,7 +2275,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 6,
+      deployedOnBlock: 26,
     },
   },
 } as const;
