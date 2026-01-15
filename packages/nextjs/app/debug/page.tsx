@@ -1,13 +1,14 @@
+"use client";
+
 import { DebugContracts } from "./_components/DebugContracts";
 import type { NextPage } from "next";
-import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
-
-export const metadata = getMetadata({
-  title: "Debug Contracts",
-  description: "Debug your deployed 🏗 Scaffold-ETH 2 contracts in an easy way",
-});
+import { notification } from "~~/utils/scaffold-eth";
 
 const Debug: NextPage = () => {
+  const testNotification = () => {
+    notification.success("Test notification - this should appear at bottom right!");
+  };
+
   return (
     <>
       <DebugContracts />
@@ -20,6 +21,9 @@ const Debug: NextPage = () => {
             packages / nextjs / app / debug / page.tsx
           </code>{" "}
         </p>
+        <button onClick={testNotification} className="btn btn-primary mt-4">
+          Test Notification
+        </button>
       </div>
     </>
   );
