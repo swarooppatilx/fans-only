@@ -9,7 +9,6 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Balance } from "@scaffold-ui/components";
 import { Wallet } from "lucide-react";
 import { Address } from "viem";
-import { FaucetButton } from "~~/components/scaffold-eth/FaucetButton";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
@@ -52,7 +51,7 @@ export const RainbowKitCustomConnectButton = () => {
               return (
                 <div className="flex flex-col items-center gap-2">
                   <div className="hidden xl:flex items-center gap-2">
-                    <FaucetButton />
+                    {/* <FaucetButton /> */}
                     <div className="flex flex-col items-end">
                       <div className="flex items-center gap-1.5">
                         <Balance
